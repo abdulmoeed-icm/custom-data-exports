@@ -59,6 +59,76 @@ export type Database = {
           },
         ]
       }
+      export_logs: {
+        Row: {
+          created_at: string
+          entity_id: string
+          fields: Json
+          format: string
+          id: string
+          row_count: number
+        }
+        Insert: {
+          created_at?: string
+          entity_id: string
+          fields: Json
+          format: string
+          id?: string
+          row_count: number
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string
+          fields?: Json
+          format?: string
+          id?: string
+          row_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "export_logs_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      export_templates: {
+        Row: {
+          created_at: string
+          entity_id: string
+          fields: Json
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          entity_id: string
+          fields: Json
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string
+          fields?: Json
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "export_templates_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
