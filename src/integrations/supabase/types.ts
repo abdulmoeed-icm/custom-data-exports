@@ -27,6 +27,38 @@ export type Database = {
         }
         Relationships: []
       }
+      entity_fields: {
+        Row: {
+          created_at: string
+          entity_id: string
+          id: string
+          label: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          entity_id: string
+          id?: string
+          label: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string
+          id?: string
+          label?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entity_fields_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
