@@ -1,8 +1,8 @@
-
 import React, { useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from 'react-router-dom';
+import { Tables } from "@/integrations/supabase/types";
 
 import { 
   Command, 
@@ -15,10 +15,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 
-interface Entity {
-  id: string;
-  name: string;
-}
+type Entity = Tables<'entities'>
 
 const Export = () => {
   const [open, setOpen] = useState(false);
