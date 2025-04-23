@@ -38,7 +38,7 @@ const Export = () => {
         console.error('Error fetching entities:', error);
         return [];
       }
-      return data;
+      return data as Entity[];
     }
   });
 
