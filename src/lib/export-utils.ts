@@ -9,7 +9,7 @@ export type ExportColumn = {
   label: string;
 };
 
-export type ExportFormat = 'csv' | 'xlsx' | 'xml' | 'pdf';
+export type ExportFormat = 'csv' | 'xlsx' | 'xml' | 'pdf' | 'json';
 
 export async function exportData(
   entityId: string,
@@ -48,6 +48,8 @@ export async function exportData(
         return exportXML(formattedData, `${entityId}-export`);
       case 'pdf':
         return exportPDF(formattedData, `${entityId}-export`);
+      case 'json':
+        return exportJSON(formattedData, `${entityId}-export`);
       default:
         throw new Error(`Unsupported export format: ${format}`);
     }
@@ -102,6 +104,12 @@ function exportXML(data: Record<string, any>[], filename: string): void {
   const xmlContent = builder.build(xmlObj);
   const blob = new Blob([xmlContent], { type: 'application/xml;charset=utf-8;' });
   saveAs(blob, `${filename}.xml`);
+}
+
+function exportJSON(data: Record<string, any>[], filename: string): void {
+  const jsonContent = JSON.stringify(data, null, 2);
+  const blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8;' });
+  saveAs(blob, `${filename}.json`);
 }
 
 function exportPDF(data: Record<string, any>[], filename: string): void {

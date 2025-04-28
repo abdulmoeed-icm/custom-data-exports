@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/select";
 import { FileText, FileSpreadsheet, FileX, FileJson } from "lucide-react";
 
-export type ExportFormat = "csv" | "xlsx" | "pdf" | "json";
+export type ExportFormat = "csv" | "xlsx" | "pdf" | "json" | "xml";
 
 interface ExportFormatSelectProps {
   value: ExportFormat;
@@ -50,6 +50,12 @@ export const ExportFormatSelect = ({
             <div className="flex items-center">
               <FileJson className="mr-2 h-4 w-4" />
               <span>JSON</span>
+            </div>
+          </SelectItem>
+          <SelectItem value="xml">
+            <div className="flex items-center">
+              <FileText className="mr-2 h-4 w-4" />
+              <span>XML</span>
             </div>
           </SelectItem>
         </SelectGroup>
