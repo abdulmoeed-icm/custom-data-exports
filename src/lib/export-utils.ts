@@ -1,0 +1,173 @@
+
+import { saveAs } from 'file-saver';
+import Papa from 'papaparse';
+import ExcelJS from 'exceljs';
+import { XMLBuilder } from 'fast-xml-parser';
+
+export type ExportColumn = {
+  id: string;
+  label: string;
+};
+
+export type ExportFormat = 'csv' | 'xlsx' | 'xml' | 'pdf';
+
+export async function exportData(
+  entityId: string,
+  columns: ExportColumn[],
+  format: ExportFormat
+): Promise<void> {
+  try {
+    // 1. Fetch data from the JSON file
+    const response = await fetch(`/src/data/${entityId}-data.json`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch data for entity: ${entityId}`);
+    }
+
+    let data = await response.json();
+    
+    // 2. Limit to max 10,000 rows for demo purposes
+    data = data.slice(0, 10000);
+    
+    // 3. Format and prepare data for export
+    // Map data to only include selected columns with their custom labels
+    const formattedData = data.map((row: Record<string, any>) => {
+      const newRow: Record<string, any> = {};
+      columns.forEach((column) => {
+        newRow[column.label] = row[column.id] !== undefined ? row[column.id] : '';
+      });
+      return newRow;
+    });
+
+    // 4. Generate file based on format and trigger download
+    switch (format) {
+      case 'csv':
+        return exportCSV(formattedData, `${entityId}-export`);
+      case 'xlsx':
+        return exportExcel(formattedData, `${entityId}-export`);
+      case 'xml':
+        return exportXML(formattedData, `${entityId}-export`);
+      case 'pdf':
+        return exportPDF(formattedData, `${entityId}-export`);
+      default:
+        throw new Error(`Unsupported export format: ${format}`);
+    }
+  } catch (error) {
+    console.error('Export error:', error);
+    throw error;
+  }
+}
+
+function exportCSV(data: Record<string, any>[], filename: string): void {
+  const csv = Papa.unparse(data);
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  saveAs(blob, `${filename}.csv`);
+}
+
+async function exportExcel(data: Record<string, any>[], filename: string): Promise<void> {
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet('Export Data');
+
+  // Add headers
+  if (data.length > 0) {
+    const headers = Object.keys(data[0]);
+    worksheet.addRow(headers);
+  }
+
+  // Add data rows
+  data.forEach(row => {
+    worksheet.addRow(Object.values(row));
+  });
+
+  // Style headers
+  const headerRow = worksheet.getRow(1);
+  headerRow.font = { bold: true };
+
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  saveAs(blob, `${filename}.xlsx`);
+}
+
+function exportXML(data: Record<string, any>[], filename: string): void {
+  const xmlObj = {
+    export: {
+      row: data
+    }
+  };
+
+  const builder = new XMLBuilder({
+    format: true,
+    ignoreAttributes: false
+  });
+  
+  const xmlContent = builder.build(xmlObj);
+  const blob = new Blob([xmlContent], { type: 'application/xml;charset=utf-8;' });
+  saveAs(blob, `${filename}.xml`);
+}
+
+function exportPDF(data: Record<string, any>[], filename: string): void {
+  // For PDF, we'll use a simple approach by creating a hidden HTML table
+  // and using the browser's print functionality to save as PDF
+  
+  // Create a temporary element to hold our data table
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    alert("Please allow popups for PDF export functionality");
+    return;
+  }
+  
+  // Generate table HTML
+  let tableHTML = `
+    <html>
+    <head>
+      <title>${filename}</title>
+      <style>
+        body { font-family: sans-serif; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+      </style>
+    </head>
+    <body>
+      <h2>${filename}</h2>
+      <table>
+        <thead>
+          <tr>
+  `;
+  
+  // Add headers
+  if (data.length > 0) {
+    Object.keys(data[0]).forEach(header => {
+      tableHTML += `<th>${header}</th>`;
+    });
+  }
+  
+  tableHTML += `
+          </tr>
+        </thead>
+        <tbody>
+  `;
+  
+  // Add rows
+  data.forEach(row => {
+    tableHTML += '<tr>';
+    Object.values(row).forEach(cell => {
+      tableHTML += `<td>${cell}</td>`;
+    });
+    tableHTML += '</tr>';
+  });
+  
+  tableHTML += `
+        </tbody>
+      </table>
+    </body>
+    </html>
+  `;
+  
+  printWindow.document.write(tableHTML);
+  printWindow.document.close();
+  
+  setTimeout(() => {
+    printWindow.print();
+    printWindow.onafterprint = () => printWindow.close();
+  }, 500);
+}

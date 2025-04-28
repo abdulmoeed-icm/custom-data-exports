@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Header } from '@/components/layout/header';
@@ -15,6 +14,7 @@ import { fields } from '@/data/fields';
 import { exportTemplates } from '@/data/export-templates';
 import { generateId } from '@/lib/utils';
 import { useToast } from "@/hooks/use-toast";
+import { exportData, type ExportColumn } from '@/lib/export-utils';
 
 type SelectedField = {
   field: (typeof fields)[string][0];
@@ -35,13 +35,11 @@ const generatePreviewData = (entityId: string, count = 10) => {
           row[field.id] = Math.floor(Math.random() * 1000);
           break;
         case 'date':
-          // Random date in the last year
           const date = new Date();
           date.setDate(date.getDate() - Math.floor(Math.random() * 365));
           row[field.id] = date;
           break;
         case 'datetime':
-          // Random datetime in the last week
           const datetime = new Date();
           datetime.setHours(datetime.getHours() - Math.floor(Math.random() * 168));
           row[field.id] = datetime;
@@ -72,15 +70,14 @@ const ExportEntity = () => {
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
   const [isLoadDialogOpen, setIsLoadDialogOpen] = useState(false);
   const [availableTemplates, setAvailableTemplates] = useState(exportTemplates);
+  const [isExporting, setIsExporting] = useState(false);
   
-  // Update selected fields whenever selection changes
   useEffect(() => {
     const updatedSelectedFields = selectedFieldIds
       .map(id => {
         const field = entityFields.find(f => f.id === id);
         if (!field) return null;
         
-        // Check if we already have this field in our array to preserve display name
         const existing = selectedFields.find(sf => sf.field.id === id);
         
         return {
@@ -93,14 +90,12 @@ const ExportEntity = () => {
     setSelectedFields(updatedSelectedFields);
   }, [selectedFieldIds, entityFields]);
   
-  // Generate preview data
   useEffect(() => {
     if (entityId) {
       setPreviewData(generatePreviewData(entityId));
     }
   }, [entityId]);
   
-  // If entity doesn't exist, redirect to export page
   useEffect(() => {
     if (!entity) {
       navigate('/export');
@@ -128,7 +123,6 @@ const ExportEntity = () => {
     
     const newSelectedFieldIds = [...selectedFieldIds];
     
-    // Swap the items
     const temp = newSelectedFieldIds[currentIndex];
     newSelectedFieldIds[currentIndex] = newSelectedFieldIds[newIndex];
     newSelectedFieldIds[newIndex] = temp;
@@ -146,24 +140,42 @@ const ExportEntity = () => {
     );
   };
   
-  const handleExport = () => {
+  const handleExport = async () => {
     if (selectedFields.length === 0) return;
     
-    // In a real application, this would trigger the actual export process
-    // For this demo, we'll just show a toast notification
-    toast({
-      title: "Export successful",
-      description: `${selectedFields.length} fields exported as ${exportFormat.toUpperCase()}`,
-    });
+    setIsExporting(true);
     
-    // Log the export (in a real app, this would be saved to a database)
-    console.log('Export Log:', {
-      entityId,
-      entityName: entity?.name,
-      fields: selectedFields.map(sf => ({ id: sf.field.id, name: sf.displayName || sf.field.label })),
-      format: exportFormat,
-      timestamp: new Date().toISOString(),
-    });
+    try {
+      const columns: ExportColumn[] = selectedFields.map(field => ({
+        id: field.field.id,
+        label: field.displayName || field.field.label
+      }));
+      
+      await exportData(entityId, columns, exportFormat);
+      
+      toast({
+        title: "Export successful",
+        description: `Data exported as ${exportFormat.toUpperCase()}`,
+      });
+      
+      console.log('Export Log:', {
+        entityId,
+        entityName: entity?.name,
+        columns,
+        format: exportFormat,
+        timestamp: new Date().toISOString(),
+      });
+      
+    } catch (error) {
+      console.error("Export failed:", error);
+      toast({
+        title: "Export failed",
+        description: "There was an error generating your export file.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
   };
   
   const handleSaveTemplate = (name: string) => {
@@ -195,7 +207,6 @@ const ExportEntity = () => {
     
     setSelectedFieldIds(template.fields.map(f => f.id));
     
-    // Also set display names from template
     const existingFields = fields[entityId] || [];
     const newSelectedFields = template.fields
       .map(templateField => {
@@ -289,9 +300,9 @@ const ExportEntity = () => {
                   <div className="flex justify-end mt-4">
                     <Button 
                       onClick={handleExport}
-                      disabled={selectedFields.length === 0}
+                      disabled={selectedFields.length === 0 || isExporting}
                     >
-                      Export Data
+                      {isExporting ? "Exporting..." : "Export Data"}
                     </Button>
                   </div>
                 </div>
