@@ -29,25 +29,28 @@ const generatePreviewData = (entityId: string, count = 10) => {
     entityFields.forEach(field => {
       switch (field.type) {
         case 'string':
-          row[field.name] = `Sample ${field.name} ${i + 1}`;
+          row[field.id] = `Sample ${field.id} ${i + 1}`;
           break;
-        case 'number':
-          row[field.name] = Math.floor(Math.random() * 1000);
+        case 'int':
+          row[field.id] = Math.floor(Math.random() * 1000);
           break;
         case 'date':
           // Random date in the last year
           const date = new Date();
           date.setDate(date.getDate() - Math.floor(Math.random() * 365));
-          row[field.name] = date;
+          row[field.id] = date;
+          break;
+        case 'datetime':
+          // Random datetime in the last week
+          const datetime = new Date();
+          datetime.setHours(datetime.getHours() - Math.floor(Math.random() * 168));
+          row[field.id] = datetime;
           break;
         case 'boolean':
-          row[field.name] = Math.random() > 0.5;
-          break;
-        case 'object':
-          row[field.name] = { id: i + 1, value: `Object ${i + 1}` };
+          row[field.id] = Math.random() > 0.5;
           break;
         default:
-          row[field.name] = `Value ${i + 1}`;
+          row[field.id] = `Value ${i + 1}`;
       }
     });
     return row;
@@ -82,7 +85,7 @@ const ExportEntity = () => {
         
         return {
           field,
-          displayName: existing?.displayName || field.name
+          displayName: existing?.displayName || field.label
         };
       })
       .filter((item): item is SelectedField => item !== null);
@@ -157,7 +160,7 @@ const ExportEntity = () => {
     console.log('Export Log:', {
       entityId,
       entityName: entity?.name,
-      fields: selectedFields.map(sf => ({ id: sf.field.id, name: sf.displayName || sf.field.name })),
+      fields: selectedFields.map(sf => ({ id: sf.field.id, name: sf.displayName || sf.field.label })),
       format: exportFormat,
       timestamp: new Date().toISOString(),
     });
@@ -168,7 +171,7 @@ const ExportEntity = () => {
       id: generateId(),
       name,
       entityId,
-      fields: selectedFields.map(sf => ({ id: sf.field.id, displayName: sf.displayName || sf.field.name })),
+      fields: selectedFields.map(sf => ({ id: sf.field.id, displayName: sf.displayName })),
       createdAt: new Date(),
     };
     
@@ -242,8 +245,8 @@ const ExportEntity = () => {
             </div>
           </div>
           
-          <div className="flex flex-col lg:flex-row gap-6">
-            <div className="w-full lg:w-1/2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
               <FieldList
                 fields={entityFields}
                 selectedFields={selectedFieldIds}
@@ -251,7 +254,7 @@ const ExportEntity = () => {
               />
             </div>
             
-            <div className="w-full lg:w-1/2">
+            <div>
               <SelectedFields
                 selectedFields={selectedFields}
                 onRemoveField={handleRemoveField}

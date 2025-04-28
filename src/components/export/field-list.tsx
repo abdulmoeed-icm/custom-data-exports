@@ -21,8 +21,8 @@ export const FieldList = ({ fields, selectedFields, onSelectField }: FieldListPr
   const [searchTerm, setSearchTerm] = useState('');
   
   const filteredFields = fields.filter(field => 
-    field.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    field.description.toLowerCase().includes(searchTerm.toLowerCase())
+    field.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    field.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -55,7 +55,7 @@ export const FieldList = ({ fields, selectedFields, onSelectField }: FieldListPr
                   htmlFor={`field-${field.id}`}
                   className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                 >
-                  <div>{field.name}</div>
+                  <div>{field.label}</div>
                   <div className="text-xs text-gray-500">{field.description}</div>
                 </label>
               </div>

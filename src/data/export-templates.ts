@@ -12,41 +12,38 @@ export interface ExportTemplate {
 
 export const exportTemplates: ExportTemplate[] = [
   {
-    id: "t1",
-    name: "Basic Customer List",
-    entityId: "1",
+    id: "template1",
+    name: "Basic Time Entry",
+    entityId: "time-entry",
     fields: [
-      { id: "c1", displayName: "ID" },
-      { id: "c2", displayName: "First Name" },
-      { id: "c3", displayName: "Last Name" },
-      { id: "c4", displayName: "Email" }
+      { id: "start_time", displayName: "Start" },
+      { id: "end_time", displayName: "End" },
+      { id: "duration", displayName: "Duration" }
     ],
-    createdAt: new Date("2023-01-15")
+    createdAt: new Date("2024-03-15")
   },
   {
-    id: "t2",
-    name: "Order Summary",
-    entityId: "2",
+    id: "template2",
+    name: "Staff Summary",
+    entityId: "staff",
     fields: [
-      { id: "o1", displayName: "Order ID" },
-      { id: "o2", displayName: "Customer" },
-      { id: "o3", displayName: "Date" },
-      { id: "o4", displayName: "Amount" },
-      { id: "o5", displayName: "Status" }
+      { id: "employee_id", displayName: "ID" },
+      { id: "first_name", displayName: "First Name" },
+      { id: "last_name", displayName: "Last Name" },
+      { id: "position", displayName: "Role" }
     ],
-    createdAt: new Date("2023-02-10")
+    createdAt: new Date("2024-03-10")
   },
   {
-    id: "t3",
-    name: "Product Inventory",
-    entityId: "3",
+    id: "template3",
+    name: "Individual Overview",
+    entityId: "individuals",
     fields: [
-      { id: "p1", displayName: "Product ID" },
-      { id: "p2", displayName: "Product Name" },
-      { id: "p5", displayName: "Stock" },
-      { id: "p4", displayName: "Price" },
-      { id: "p6", displayName: "Category" }
+      { id: "client_id", displayName: "Client ID" },
+      { id: "first_name", displayName: "First" },
+      { id: "last_name", displayName: "Last" },
+      { id: "enrollment_date", displayName: "Since" }
     ],
-    createdAt: new Date("2023-03-05")
+    createdAt: new Date("2024-04-01")
   }
 ];

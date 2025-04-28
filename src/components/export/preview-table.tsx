@@ -12,38 +12,32 @@ interface PreviewTableProps {
 }
 
 export const PreviewTable = ({ fields, data }: PreviewTableProps) => {
-  if (fields.length === 0) {
+  if (!data.length) {
     return (
-      <div className="text-center p-4 bg-gray-50 rounded">
-        Select at least one field to preview data
-      </div>
-    );
-  }
-
-  if (data.length === 0) {
-    return (
-      <div className="text-center p-4 bg-gray-50 rounded">
+      <div className="text-center py-8 text-muted-foreground">
         No data available for preview
       </div>
     );
   }
 
   return (
-    <div className="border rounded-md overflow-hidden">
+    <div className="border rounded-md overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
-            {fields.map((item) => (
-              <TableHead key={item.field.id}>{item.displayName || item.field.name}</TableHead>
+            {fields.map((field) => (
+              <TableHead key={field.field.id}>
+                {field.displayName || field.field.label}
+              </TableHead>
             ))}
           </TableRow>
         </TableHeader>
         <TableBody>
           {data.map((row, i) => (
             <TableRow key={i}>
-              {fields.map((item) => (
-                <TableCell key={item.field.id}>
-                  {formatCellValue(row[item.field.name], item.field.type)}
+              {fields.map((field) => (
+                <TableCell key={field.field.id}>
+                  {formatValue(row[field.field.id], field.field.type)}
                 </TableCell>
               ))}
             </TableRow>
@@ -54,19 +48,18 @@ export const PreviewTable = ({ fields, data }: PreviewTableProps) => {
   );
 };
 
-function formatCellValue(value: any, type: string): React.ReactNode {
-  if (value === undefined || value === null) {
-    return <span className="text-gray-400">—</span>;
-  }
-
+// Helper function to format values based on their type
+const formatValue = (value: any, type: string): string => {
+  if (value === undefined || value === null) return '';
+  
   switch (type) {
+    case 'datetime':
+      return new Date(value).toLocaleString();
     case 'date':
       return new Date(value).toLocaleDateString();
     case 'boolean':
       return value ? 'Yes' : 'No';
-    case 'object':
-      return <span className="text-gray-600">{JSON.stringify(value)}</span>;
     default:
       return String(value);
   }
-}
+};

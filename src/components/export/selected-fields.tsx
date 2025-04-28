@@ -71,13 +71,13 @@ export const SelectedFields = ({
                   ) : (
                     <div className="flex items-center">
                       <span className="font-medium">
-                        {item.displayName || item.field.name}
+                        {item.displayName || item.field.label}
                       </span>
                       <Button
                         variant="ghost"
                         size="sm"
                         className="h-5 w-5 p-0 ml-2"
-                        onClick={() => handleEdit(item.field.id, item.displayName || item.field.name)}
+                        onClick={() => handleEdit(item.field.id, item.displayName || item.field.label)}
                       >
                         <Edit className="h-3 w-3" />
                       </Button>

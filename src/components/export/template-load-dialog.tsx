@@ -8,8 +8,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { formatDate } from "@/lib/utils";
 import { type ExportTemplate } from '@/data/export-templates';
-import { formatDate } from '@/lib/utils';
 
 interface TemplateLoadDialogProps {
   open: boolean;
@@ -26,45 +26,42 @@ export const TemplateLoadDialog = ({
 }: TemplateLoadDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Load Export Template</DialogTitle>
         </DialogHeader>
-        <ScrollArea className="h-[300px] rounded-md border p-4">
-          {templates.length > 0 ? (
-            <div className="space-y-4">
-              {templates.map((template) => (
-                <div
-                  key={template.id}
-                  className="flex items-center justify-between p-3 rounded-lg border hover:bg-gray-50"
-                >
-                  <div className="space-y-1">
-                    <h3 className="font-medium">{template.name}</h3>
-                    <p className="text-sm text-gray-500">
-                      {template.fields.length} fields • Created {formatDate(template.createdAt)}
-                    </p>
-                  </div>
-                  <Button
-                    size="sm"
+        <div className="py-4">
+          {templates.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              No templates available for this entity
+            </div>
+          ) : (
+            <ScrollArea className="h-[300px]">
+              <div className="space-y-2">
+                {templates.map((template) => (
+                  <div
+                    key={template.id}
+                    className="flex justify-between p-3 border rounded-md hover:bg-muted/50 cursor-pointer"
                     onClick={() => {
                       onLoad(template);
                       onOpenChange(false);
                     }}
                   >
-                    Load
-                  </Button>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="flex items-center justify-center h-full text-center text-gray-500">
-              <div>
-                <p>No saved templates available</p>
-                <p className="text-sm mt-1">Create and save a template first</p>
+                    <div>
+                      <h4 className="font-medium">{template.name}</h4>
+                      <p className="text-sm text-muted-foreground">
+                        {template.fields.length} fields
+                      </p>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {formatDate(template.createdAt)}
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
+            </ScrollArea>
           )}
-        </ScrollArea>
+        </div>
       </DialogContent>
     </Dialog>
   );

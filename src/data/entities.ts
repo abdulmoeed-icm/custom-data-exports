@@ -2,33 +2,13 @@
 export interface Entity {
   id: string;
   name: string;
-  description: string;
+  description?: string;
 }
 
 export const entities: Entity[] = [
-  {
-    id: "1",
-    name: "Customers",
-    description: "Customer records including contact information and metadata"
-  },
-  {
-    id: "2",
-    name: "Orders",
-    description: "Order records with line items and shipping details"
-  },
-  {
-    id: "3",
-    name: "Products",
-    description: "Product catalog with pricing and inventory information"
-  },
-  {
-    id: "4",
-    name: "Employees",
-    description: "Employee records including personal details and roles"
-  },
-  {
-    id: "5",
-    name: "Suppliers",
-    description: "Supplier information and purchase history"
-  }
+  { id: "time-entry", name: "Time Entry", description: "Track time spent on activities" },
+  { id: "individuals", name: "Individuals", description: "Client or participant information" },
+  { id: "staff", name: "Staff", description: "Staff member details" },
+  { id: "trainings", name: "Staff Trainings", description: "Training records for staff" },
+  { id: "assessments", name: "Individual Assessments", description: "Assessment records for clients" }
 ];

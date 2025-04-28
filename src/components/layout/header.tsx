@@ -1,33 +1,38 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { Button } from "@/components/ui/button";
+import { ChevronLeft } from "lucide-react";
 
-export const Header = () => {
+interface HeaderProps {
+  title?: string;
+  subtitle?: string;
+}
+
+export const Header = ({ title, subtitle }: HeaderProps) => {
+  const navigate = useNavigate();
+
   return (
-    <header className="bg-white shadow">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex">
-            <div className="flex-shrink-0 flex items-center">
-              <Link to="/" className="text-xl font-bold text-gray-800">
-                Data Forge Exports
-              </Link>
+    <header className="bg-white border-b">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="flex items-center">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate(-1)}
+            className="mr-4"
+          >
+            <ChevronLeft className="h-4 w-4 mr-1" />
+            Back
+          </Button>
+          {title && (
+            <div>
+              <h1 className="text-xl font-semibold">{title}</h1>
+              {subtitle && (
+                <p className="text-sm text-muted-foreground">{subtitle}</p>
+              )}
             </div>
-            <nav className="ml-6 flex items-center space-x-8">
-              <Link
-                to="/"
-                className="text-gray-900 hover:text-gray-700 px-3 py-2 text-sm font-medium"
-              >
-                Home
-              </Link>
-              <Link
-                to="/export"
-                className="text-gray-900 hover:text-gray-700 px-3 py-2 text-sm font-medium"
-              >
-                Export Data
-              </Link>
-            </nav>
-          </div>
+          )}
         </div>
       </div>
     </header>
