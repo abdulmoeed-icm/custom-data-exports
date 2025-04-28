@@ -47,7 +47,7 @@ const Export = () => {
               <CommandInput placeholder="Search entities..." />
               <CommandEmpty>No entity found.</CommandEmpty>
               <CommandGroup>
-                {entities.map((entity) => (
+                {entities && entities.map((entity) => (
                   <CommandItem
                     key={entity.id}
                     value={entity.id}
