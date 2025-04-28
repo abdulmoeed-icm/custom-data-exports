@@ -1,0 +1,42 @@
+
+{
+  "time-entry": [
+    { "id": "start_time", "label": "Start Time", "type": "datetime" },
+    { "id": "end_time", "label": "End Time", "type": "datetime" },
+    { "id": "duration", "label": "Duration (mins)", "type": "int" },
+    { "id": "staff_name", "label": "Staff Name", "type": "string" },
+    { "id": "program", "label": "Program", "type": "string" }
+  ],
+  "individuals": [
+    { "id": "client_id", "label": "Client ID", "type": "string" },
+    { "id": "first_name", "label": "First Name", "type": "string" },
+    { "id": "last_name", "label": "Last Name", "type": "string" },
+    { "id": "date_of_birth", "label": "Date of Birth", "type": "date" },
+    { "id": "enrollment_date", "label": "Enrollment Date", "type": "date" },
+    { "id": "status", "label": "Status", "type": "string" }
+  ],
+  "staff": [
+    { "id": "employee_id", "label": "Employee ID", "type": "string" },
+    { "id": "first_name", "label": "First Name", "type": "string" },
+    { "id": "last_name", "label": "Last Name", "type": "string" },
+    { "id": "position", "label": "Position", "type": "string" },
+    { "id": "hire_date", "label": "Hire Date", "type": "date" },
+    { "id": "certification", "label": "Certification", "type": "string" }
+  ],
+  "trainings": [
+    { "id": "training_id", "label": "Training ID", "type": "string" },
+    { "id": "employee_id", "label": "Employee ID", "type": "string" },
+    { "id": "training_name", "label": "Training Name", "type": "string" },
+    { "id": "completion_date", "label": "Completion Date", "type": "date" },
+    { "id": "expiry_date", "label": "Expiry Date", "type": "date" },
+    { "id": "status", "label": "Status", "type": "string" }
+  ],
+  "assessments": [
+    { "id": "assessment_id", "label": "Assessment ID", "type": "string" },
+    { "id": "client_id", "label": "Client ID", "type": "string" },
+    { "id": "assessment_type", "label": "Assessment Type", "type": "string" },
+    { "id": "assessment_date", "label": "Assessment Date", "type": "date" },
+    { "id": "assessor_name", "label": "Assessor Name", "type": "string" },
+    { "id": "score", "label": "Score", "type": "int" }
+  ]
+}

@@ -1,0 +1,8 @@
+
+[
+  { "id": "time-entry", "name": "Time Entry" },
+  { "id": "individuals", "name": "Individuals" },
+  { "id": "staff", "name": "Staff" },
+  { "id": "trainings", "name": "Staff Trainings" },
+  { "id": "assessments", "name": "Individual Assessments" }
+]
