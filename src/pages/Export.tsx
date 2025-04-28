@@ -1,24 +1,76 @@
 
 import React from 'react';
-import { Header } from '@/components/layout/header';
-import { EntityCard } from '@/components/export/entity-card';
+import { useNavigate } from 'react-router-dom';
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { entities } from '@/data/entities';
 
 const Export = () => {
+  const navigate = useNavigate();
+  const [open, setOpen] = React.useState(false);
+  const [value, setValue] = React.useState("");
+
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header />
-      <main className="flex-1">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-8">Select an Entity to Export</h1>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {entities.map(entity => (
-              <EntityCard key={entity.id} entity={entity} />
-            ))}
-          </div>
-        </div>
-      </main>
+    <div className="flex min-h-screen flex-col items-center p-8">
+      <div className="w-full max-w-2xl space-y-8 animate-fade-in">
+        <h1 className="text-4xl font-bold text-center">Custom Data Export</h1>
+        
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={open}
+              className="w-full justify-between"
+            >
+              {value
+                ? entities.find((entity) => entity.id === value)?.name
+                : "Select an entity..."}
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-full p-0">
+            <Command>
+              <CommandInput placeholder="Search entities..." />
+              <CommandEmpty>No entity found.</CommandEmpty>
+              <CommandGroup>
+                {entities.map((entity) => (
+                  <CommandItem
+                    key={entity.id}
+                    value={entity.id}
+                    onSelect={(currentValue) => {
+                      setValue(currentValue);
+                      setOpen(false);
+                      navigate(`/export/${currentValue}`);
+                    }}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        value === entity.id ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    {entity.name}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </Command>
+          </PopoverContent>
+        </Popover>
+      </div>
     </div>
   );
 };
