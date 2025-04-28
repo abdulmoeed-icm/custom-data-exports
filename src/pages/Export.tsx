@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -20,8 +20,16 @@ import { entities } from '@/data/entities';
 
 const Export = () => {
   const navigate = useNavigate();
-  const [open, setOpen] = React.useState(false);
-  const [value, setValue] = React.useState("");
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState("");
+  const [entityList, setEntityList] = useState(entities || []);
+
+  // Ensure entities are loaded to avoid "undefined is not iterable" error
+  useEffect(() => {
+    if (entities) {
+      setEntityList(entities);
+    }
+  }, []);
 
   return (
     <div className="flex min-h-screen flex-col items-center p-8">
@@ -37,7 +45,7 @@ const Export = () => {
               className="w-full justify-between"
             >
               {value
-                ? entities.find((entity) => entity.id === value)?.name
+                ? entityList.find((entity) => entity.id === value)?.name
                 : "Select an entity..."}
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
@@ -47,7 +55,7 @@ const Export = () => {
               <CommandInput placeholder="Search entities..." />
               <CommandEmpty>No entity found.</CommandEmpty>
               <CommandGroup>
-                {entities && entities.map((entity) => (
+                {entityList.map((entity) => (
                   <CommandItem
                     key={entity.id}
                     value={entity.id}
