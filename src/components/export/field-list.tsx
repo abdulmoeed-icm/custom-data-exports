@@ -1,0 +1,72 @@
+
+import React, { useState } from 'react';
+import { 
+  Card, 
+  CardContent, 
+  CardHeader,
+  CardTitle
+} from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { type Field } from '@/data/fields';
+import { Search } from 'lucide-react';
+
+interface FieldListProps {
+  fields: Field[];
+  selectedFields: string[];
+  onSelectField: (fieldId: string, isChecked: boolean) => void;
+}
+
+export const FieldList = ({ fields, selectedFields, onSelectField }: FieldListProps) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  const filteredFields = fields.filter(field => 
+    field.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    field.description.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Available Fields</CardTitle>
+        <div className="relative">
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
+          <Input
+            placeholder="Search fields..."
+            className="pl-8"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+      </CardHeader>
+      <CardContent className="max-h-[500px] overflow-y-auto">
+        <div className="space-y-3">
+          {filteredFields.length > 0 ? (
+            filteredFields.map((field) => (
+              <div key={field.id} className="flex items-center space-x-2">
+                <Checkbox 
+                  id={`field-${field.id}`} 
+                  checked={selectedFields.includes(field.id)}
+                  onCheckedChange={(checked) => {
+                    onSelectField(field.id, checked === true);
+                  }}
+                />
+                <label
+                  htmlFor={`field-${field.id}`}
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  <div>{field.name}</div>
+                  <div className="text-xs text-gray-500">{field.description}</div>
+                </label>
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-4 text-gray-500">
+              No matching fields found
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+};

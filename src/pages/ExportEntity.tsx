@@ -1,215 +1,315 @@
 
-import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from "@/integrations/supabase/client";
-import { Tables } from "@/integrations/supabase/types";
-import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Input } from "@/components/ui/input";
-import { FieldList } from "@/components/export/FieldList";
-import { SelectedFields } from "@/components/export/SelectedFields";
-import { PreviewTable } from "@/components/export/PreviewTable";
-import { ExportFormatSelect, type ExportFormat } from "@/components/export/ExportFormatSelect";
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { Header } from '@/components/layout/header';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FieldList } from '@/components/export/field-list';
+import { SelectedFields } from '@/components/export/selected-fields';
+import { PreviewTable } from '@/components/export/preview-table';
+import { ExportFormatSelect, type ExportFormat } from '@/components/export/export-format-select';
+import { TemplateSaveDialog } from '@/components/export/template-save-dialog';
+import { TemplateLoadDialog } from '@/components/export/template-load-dialog';
+import { entities } from '@/data/entities';
+import { fields } from '@/data/fields';
+import { exportTemplates } from '@/data/export-templates';
+import { generateId } from '@/lib/utils';
 import { useToast } from "@/hooks/use-toast";
 
-type EntityField = Tables<'entity_fields'>;
-type SelectedField = EntityField & { displayLabel?: string };
+type SelectedField = {
+  field: (typeof fields)[string][0];
+  displayName: string;
+};
+
+// Mock data for preview
+const generatePreviewData = (entityId: string, count = 10) => {
+  const entityFields = fields[entityId] || [];
+  return Array.from({ length: count }, (_, i) => {
+    const row: Record<string, any> = {};
+    entityFields.forEach(field => {
+      switch (field.type) {
+        case 'string':
+          row[field.name] = `Sample ${field.name} ${i + 1}`;
+          break;
+        case 'number':
+          row[field.name] = Math.floor(Math.random() * 1000);
+          break;
+        case 'date':
+          // Random date in the last year
+          const date = new Date();
+          date.setDate(date.getDate() - Math.floor(Math.random() * 365));
+          row[field.name] = date;
+          break;
+        case 'boolean':
+          row[field.name] = Math.random() > 0.5;
+          break;
+        case 'object':
+          row[field.name] = { id: i + 1, value: `Object ${i + 1}` };
+          break;
+        default:
+          row[field.name] = `Value ${i + 1}`;
+      }
+    });
+    return row;
+  });
+};
 
 const ExportEntity = () => {
-  const { entityId } = useParams<{ entityId: string }>();
-  const [selectedFields, setSelectedFields] = useState<SelectedField[]>([]);
-  const [templateName, setTemplateName] = useState('');
-  const [exportFormat, setExportFormat] = useState<ExportFormat>('csv');
+  const { entityId = '' } = useParams<{ entityId: string }>();
+  const navigate = useNavigate();
   const { toast } = useToast();
-
-  const { data: fields = [] } = useQuery({
-    queryKey: ['entityFields', entityId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('entity_fields')
-        .select('*')
-        .eq('entity_id', entityId)
-        .order('name');
-      
-      if (error) throw error;
-      return data as EntityField[];
-    },
-  });
-
-  const { data: previewData = [] } = useQuery({
-    queryKey: ['previewData', entityId],
-    enabled: selectedFields.length > 0,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from(entityId!)
-        .select(selectedFields.map(f => f.name).join(','))
-        .limit(50);
-      
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const handleFieldSelect = (field: EntityField, checked: boolean) => {
-    if (checked) {
-      setSelectedFields(prev => [...prev, field]);
+  
+  const entity = entities.find(e => e.id === entityId);
+  const entityFields = fields[entityId] || [];
+  
+  const [selectedFieldIds, setSelectedFieldIds] = useState<string[]>([]);
+  const [selectedFields, setSelectedFields] = useState<SelectedField[]>([]);
+  const [exportFormat, setExportFormat] = useState<ExportFormat>('csv');
+  const [previewData, setPreviewData] = useState<Array<Record<string, any>>>([]);
+  const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
+  const [isLoadDialogOpen, setIsLoadDialogOpen] = useState(false);
+  const [availableTemplates, setAvailableTemplates] = useState(exportTemplates);
+  
+  // Update selected fields whenever selection changes
+  useEffect(() => {
+    const updatedSelectedFields = selectedFieldIds
+      .map(id => {
+        const field = entityFields.find(f => f.id === id);
+        if (!field) return null;
+        
+        // Check if we already have this field in our array to preserve display name
+        const existing = selectedFields.find(sf => sf.field.id === id);
+        
+        return {
+          field,
+          displayName: existing?.displayName || field.name
+        };
+      })
+      .filter((item): item is SelectedField => item !== null);
+    
+    setSelectedFields(updatedSelectedFields);
+  }, [selectedFieldIds, entityFields]);
+  
+  // Generate preview data
+  useEffect(() => {
+    if (entityId) {
+      setPreviewData(generatePreviewData(entityId));
+    }
+  }, [entityId]);
+  
+  // If entity doesn't exist, redirect to export page
+  useEffect(() => {
+    if (!entity) {
+      navigate('/export');
+    }
+  }, [entity, navigate]);
+  
+  const handleSelectField = (fieldId: string, isChecked: boolean) => {
+    if (isChecked) {
+      setSelectedFieldIds(prev => [...prev, fieldId]);
     } else {
-      setSelectedFields(prev => prev.filter(f => f.id !== field.id));
+      setSelectedFieldIds(prev => prev.filter(id => id !== fieldId));
     }
   };
-
-  const handleLabelChange = (fieldId: string, newLabel: string) => {
+  
+  const handleRemoveField = (fieldId: string) => {
+    setSelectedFieldIds(prev => prev.filter(id => id !== fieldId));
+  };
+  
+  const handleMoveField = (fieldId: string, direction: "up" | "down") => {
+    const currentIndex = selectedFieldIds.indexOf(fieldId);
+    if (currentIndex === -1) return;
+    
+    const newIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+    if (newIndex < 0 || newIndex >= selectedFieldIds.length) return;
+    
+    const newSelectedFieldIds = [...selectedFieldIds];
+    
+    // Swap the items
+    const temp = newSelectedFieldIds[currentIndex];
+    newSelectedFieldIds[currentIndex] = newSelectedFieldIds[newIndex];
+    newSelectedFieldIds[newIndex] = temp;
+    
+    setSelectedFieldIds(newSelectedFieldIds);
+  };
+  
+  const handleRenameField = (fieldId: string, displayName: string) => {
     setSelectedFields(prev =>
-      prev.map(field =>
-        field.id === fieldId
-          ? { ...field, displayLabel: newLabel }
-          : field
+      prev.map(item =>
+        item.field.id === fieldId
+          ? { ...item, displayName }
+          : item
       )
     );
   };
-
-  const handleSaveTemplate = async () => {
-    if (!templateName) {
-      toast({
-        title: "Template name required",
-        description: "Please enter a name for your template",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const { error } = await supabase
-      .from('export_templates')
-      .insert({
-        name: templateName,
-        entity_id: entityId,
-        fields: selectedFields.map(f => ({
-          id: f.id,
-          name: f.name,
-          label: f.displayLabel || f.label
-        }))
-      });
-
-    if (error) {
-      toast({
-        title: "Error saving template",
-        description: error.message,
-        variant: "destructive",
-      });
-      return;
-    }
-
+  
+  const handleExport = () => {
+    if (selectedFields.length === 0) return;
+    
+    // In a real application, this would trigger the actual export process
+    // For this demo, we'll just show a toast notification
+    toast({
+      title: "Export successful",
+      description: `${selectedFields.length} fields exported as ${exportFormat.toUpperCase()}`,
+    });
+    
+    // Log the export (in a real app, this would be saved to a database)
+    console.log('Export Log:', {
+      entityId,
+      entityName: entity?.name,
+      fields: selectedFields.map(sf => ({ id: sf.field.id, name: sf.displayName || sf.field.name })),
+      format: exportFormat,
+      timestamp: new Date().toISOString(),
+    });
+  };
+  
+  const handleSaveTemplate = (name: string) => {
+    const newTemplate = {
+      id: generateId(),
+      name,
+      entityId,
+      fields: selectedFields.map(sf => ({ id: sf.field.id, displayName: sf.displayName || sf.field.name })),
+      createdAt: new Date(),
+    };
+    
+    setAvailableTemplates(prev => [newTemplate, ...prev]);
+    
     toast({
       title: "Template saved",
-      description: "Your export template has been saved successfully",
+      description: `"${name}" has been saved and is available for future use`,
     });
   };
-
-  const handleExport = async () => {
-    // Log the export
-    await supabase
-      .from('export_logs')
-      .insert({
-        entity_id: entityId,
-        fields: selectedFields.map(f => ({
-          name: f.name,
-          label: f.displayLabel || f.label
-        })),
-        format: exportFormat,
-        row_count: previewData.length
+  
+  const handleLoadTemplate = (template: typeof exportTemplates[0]) => {
+    if (template.entityId !== entityId) {
+      toast({
+        title: "Template not compatible",
+        description: "This template is for a different entity type",
+        variant: "destructive",
       });
-
-    // TODO: Implement actual export functionality
+      return;
+    }
+    
+    setSelectedFieldIds(template.fields.map(f => f.id));
+    
+    // Also set display names from template
+    const existingFields = fields[entityId] || [];
+    const newSelectedFields = template.fields
+      .map(templateField => {
+        const field = existingFields.find(f => f.id === templateField.id);
+        if (!field) return null;
+        
+        return {
+          field,
+          displayName: templateField.displayName
+        };
+      })
+      .filter((item): item is SelectedField => item !== null);
+    
+    setSelectedFields(newSelectedFields);
+    
     toast({
-      title: "Export started",
-      description: `Exporting data in ${exportFormat.toUpperCase()} format`,
+      title: "Template loaded",
+      description: `"${template.name}" has been applied with ${template.fields.length} fields`,
     });
   };
-
+  
+  if (!entity) return null;
+  
+  const filteredTemplates = availableTemplates.filter(t => t.entityId === entityId);
+  
   return (
-    <div className="container mx-auto px-4 py-8 h-[calc(100vh-4rem)]">
-      <div className="h-full flex flex-col">
-        <ResizablePanelGroup direction="horizontal" className="flex-grow">
-          <ResizablePanel defaultSize={30}>
-            <div className="h-full p-6 border-r">
-              <h2 className="text-lg font-semibold mb-4">All Fields</h2>
+    <div className="flex flex-col min-h-screen">
+      <Header />
+      <main className="flex-1">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">{entity.name} Export</h1>
+              <p className="text-gray-600">{entity.description}</p>
+            </div>
+            <div className="flex items-center space-x-4">
+              <Button variant="outline" onClick={() => setIsLoadDialogOpen(true)}>
+                Load Template
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setIsSaveDialogOpen(true)}
+                disabled={selectedFields.length === 0}
+              >
+                Save Template
+              </Button>
+            </div>
+          </div>
+          
+          <div className="flex flex-col lg:flex-row gap-6">
+            <div className="w-full lg:w-1/2">
               <FieldList
-                fields={fields}
-                onFieldSelect={handleFieldSelect}
+                fields={entityFields}
+                selectedFields={selectedFieldIds}
+                onSelectField={handleSelectField}
               />
             </div>
-          </ResizablePanel>
-          
-          <ResizableHandle withHandle />
-          
-          <ResizablePanel defaultSize={70}>
-            <div className="h-full p-6 flex flex-col">
-              <h2 className="text-lg font-semibold mb-4">Selected Columns</h2>
+            
+            <div className="w-full lg:w-1/2">
               <SelectedFields
-                fields={selectedFields}
-                onLabelChange={handleLabelChange}
+                selectedFields={selectedFields}
+                onRemoveField={handleRemoveField}
+                onMoveField={handleMoveField}
+                onRenameField={handleRenameField}
               />
-
-              {selectedFields.length > 0 && (
-                <>
-                  <h3 className="text-lg font-semibold mt-8 mb-4">Preview (First 50 Rows)</h3>
-                  <div className="flex-grow overflow-auto">
-                    <PreviewTable
-                      data={previewData}
-                      fields={selectedFields}
+            </div>
+          </div>
+          
+          <div className="mt-8">
+            <Tabs defaultValue="preview">
+              <TabsList className="mb-4">
+                <TabsTrigger value="preview">Preview</TabsTrigger>
+                <TabsTrigger value="export">Export Options</TabsTrigger>
+              </TabsList>
+              <TabsContent value="preview" className="p-4 border rounded-md">
+                <PreviewTable
+                  fields={selectedFields}
+                  data={previewData}
+                />
+              </TabsContent>
+              <TabsContent value="export" className="p-4 border rounded-md">
+                <div className="flex flex-col gap-4">
+                  <div>
+                    <h3 className="text-lg font-medium mb-2">Export Format</h3>
+                    <ExportFormatSelect
+                      value={exportFormat}
+                      onValueChange={setExportFormat}
                     />
                   </div>
-                </>
-              )}
-            </div>
-          </ResizablePanel>
-        </ResizablePanelGroup>
-
-        <div className="border-t mt-4 p-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <ExportFormatSelect
-              value={exportFormat}
-              onValueChange={setExportFormat}
-            />
-            
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="outline" disabled={selectedFields.length === 0}>
-                  Save as Template
-                </Button>
-              </SheetTrigger>
-              <SheetContent>
-                <SheetHeader>
-                  <SheetTitle>Save Export Template</SheetTitle>
-                  <SheetDescription>
-                    Save your current selection as a template for future use
-                  </SheetDescription>
-                </SheetHeader>
-                <div className="py-4">
-                  <Input
-                    placeholder="Template name"
-                    value={templateName}
-                    onChange={(e) => setTemplateName(e.target.value)}
-                  />
+                  
+                  <div className="flex justify-end mt-4">
+                    <Button 
+                      onClick={handleExport}
+                      disabled={selectedFields.length === 0}
+                    >
+                      Export Data
+                    </Button>
+                  </div>
                 </div>
-                <Button onClick={handleSaveTemplate}>
-                  Save Template
-                </Button>
-              </SheetContent>
-            </Sheet>
+              </TabsContent>
+            </Tabs>
           </div>
-
-          <Button
-            disabled={selectedFields.length === 0}
-            onClick={handleExport}
-            className="min-w-[200px]"
-          >
-            Export {selectedFields.length} Columns
-          </Button>
         </div>
-      </div>
+      </main>
+      
+      <TemplateSaveDialog
+        open={isSaveDialogOpen}
+        onOpenChange={setIsSaveDialogOpen}
+        onSave={handleSaveTemplate}
+      />
+      
+      <TemplateLoadDialog
+        open={isLoadDialogOpen}
+        onOpenChange={setIsLoadDialogOpen}
+        templates={filteredTemplates}
+        onLoad={handleLoadTemplate}
+      />
     </div>
   );
 };
