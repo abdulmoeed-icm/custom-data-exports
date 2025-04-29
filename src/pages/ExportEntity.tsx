@@ -14,6 +14,7 @@ import { exportData, ExportColumn } from '@/lib/export-utils';
 import { useToast } from "@/hooks/use-toast";
 import { useTemplates } from '@/hooks/useTemplates';
 import { TemplatesDialog } from '@/components/export/templates-dialog';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 type SelectedField = {
   field: Field;
@@ -21,12 +22,17 @@ type SelectedField = {
   entityId: string;
 };
 
-// Mock data for preview
-const generatePreviewData = (entityId: string, count = 10) => {
-  const entityFields = fields[entityId] || [];
+// Generate mock data based on selected fields from multiple entities
+const generateCombinedPreviewData = (
+  selectedFields: SelectedField[], 
+  count = 10
+): Array<Record<string, any>> => {
   return Array.from({ length: count }, (_, i) => {
     const row: Record<string, any> = {};
-    entityFields.forEach(field => {
+    
+    selectedFields.forEach(selectedField => {
+      const { field, entityId } = selectedField;
+      
       switch (field.type) {
         case 'string':
           row[field.id] = `Sample ${field.id} ${i + 1}`;
@@ -48,9 +54,10 @@ const generatePreviewData = (entityId: string, count = 10) => {
           row[field.id] = Math.random() > 0.5;
           break;
         default:
-          row[field.id] = `Value ${i + 1}`;
+          row[field.id] = `${entityId} value ${i + 1}`;
       }
     });
+    
     return row;
   });
 };
@@ -61,6 +68,7 @@ const ExportEntity = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { templates, saveTemplate, deleteTemplate, getTemplatesByEntityId } = useTemplates();
+  const isMobile = useIsMobile();
   
   // Get the selected entities from location state or use only the one from URL
   const [selectedEntities, setSelectedEntities] = useState<Entity[]>(() => {
@@ -74,6 +82,9 @@ const ExportEntity = () => {
 
   // State for the active entity tab
   const [activeEntityId, setActiveEntityId] = useState(selectedEntities[0]?.id || entityId);
+  
+  // Whether to show a unified view or entity-specific tabs
+  const [unifiedView, setUnifiedView] = useState(true);
   
   // Get all entity fields across all selected entities
   const allEntityFields: Record<string, Field[]> = {};
@@ -122,12 +133,14 @@ const ExportEntity = () => {
     setSelectedFields(updatedSelectedFields);
   }, [selectedFieldIds, allEntityFields]);
   
-  // Generate preview data for the active entity
+  // Generate combined preview data whenever selected fields change
   useEffect(() => {
-    if (activeEntityId) {
-      setPreviewData(generatePreviewData(activeEntityId));
+    if (selectedFields.length > 0) {
+      setPreviewData(generateCombinedPreviewData(selectedFields));
+    } else {
+      setPreviewData([]);
     }
-  }, [activeEntityId]);
+  }, [selectedFields]);
   
   // Validate that we have at least one entity
   useEffect(() => {
@@ -169,24 +182,44 @@ const ExportEntity = () => {
   };
   
   const handleMoveField = (entityId: string, fieldId: string, direction: "up" | "down") => {
-    setSelectedFieldIds(prev => {
-      const updatedFieldIds = { ...prev };
-      if (!updatedFieldIds[entityId]) return prev;
-      
-      const currentFields = [...updatedFieldIds[entityId]];
-      const currentIndex = currentFields.indexOf(fieldId);
-      if (currentIndex === -1) return prev;
-      
-      const newIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
-      if (newIndex < 0 || newIndex >= currentFields.length) return prev;
-      
-      const temp = currentFields[currentIndex];
-      currentFields[currentIndex] = currentFields[newIndex];
-      currentFields[newIndex] = temp;
-      
-      updatedFieldIds[entityId] = currentFields;
-      return updatedFieldIds;
-    });
+    if (unifiedView) {
+      // In unified view, we need to move the field in the overall selectedFields array
+      setSelectedFields(prev => {
+        const newFields = [...prev];
+        const currentIndex = newFields.findIndex(f => f.field.id === fieldId && f.entityId === entityId);
+        
+        if (currentIndex === -1) return prev;
+        
+        const newIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+        if (newIndex < 0 || newIndex >= newFields.length) return prev;
+        
+        const temp = newFields[currentIndex];
+        newFields[currentIndex] = newFields[newIndex];
+        newFields[newIndex] = temp;
+        
+        return newFields;
+      });
+    } else {
+      // In entity-specific view, move within entity
+      setSelectedFieldIds(prev => {
+        const updatedFieldIds = { ...prev };
+        if (!updatedFieldIds[entityId]) return prev;
+        
+        const currentFields = [...updatedFieldIds[entityId]];
+        const currentIndex = currentFields.indexOf(fieldId);
+        if (currentIndex === -1) return prev;
+        
+        const newIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+        if (newIndex < 0 || newIndex >= currentFields.length) return prev;
+        
+        const temp = currentFields[currentIndex];
+        currentFields[currentIndex] = currentFields[newIndex];
+        currentFields[newIndex] = temp;
+        
+        updatedFieldIds[entityId] = currentFields;
+        return updatedFieldIds;
+      });
+    }
   };
   
   const handleRenameField = (entityId: string, fieldId: string, displayName: string) => {
@@ -212,38 +245,20 @@ const ExportEntity = () => {
     setIsExporting(true);
     
     try {
-      // Group selected fields by entity
-      const fieldsByEntity: Record<string, ExportColumn[]> = {};
-      
-      selectedFields.forEach(field => {
-        if (!fieldsByEntity[field.entityId]) {
-          fieldsByEntity[field.entityId] = [];
-        }
+      // For unified export, create a single export with all fields
+      const combinedExportColumns: ExportColumn[] = selectedFields.map(field => ({
+        id: field.field.id,
+        label: field.displayName || field.field.label,
+        entityId: field.entityId // Pass the entityId for reference
+      }));
         
-        fieldsByEntity[field.entityId].push({
-          id: field.field.id,
-          label: field.displayName || field.field.label
-        });
-      });
-      
-      // Check if we're exporting a single entity or multiple
-      if (selectedEntities.length === 1) {
-        // Single entity export
-        const entityId = selectedEntities[0].id;
-        await exportData(entityId, fieldsByEntity[entityId], exportFormat);
-      } else {
-        // Multi-entity export - for now let's export each separately
-        // In future this could be enhanced to create a combined export
-        for (const entityId of Object.keys(fieldsByEntity)) {
-          if (fieldsByEntity[entityId].length > 0) {
-            await exportData(entityId, fieldsByEntity[entityId], exportFormat);
-          }
-        }
-      }
+      // Use the first entity as the "primary" entity for the export
+      const primaryEntityId = selectedEntities[0].id;
+      await exportData(primaryEntityId, combinedExportColumns, exportFormat, true);
       
       toast({
         title: "Export successful",
-        description: `Data exported as ${exportFormat.toUpperCase()}`,
+        description: `Combined data exported as ${exportFormat.toUpperCase()}`,
       });
       
     } catch (error) {
@@ -259,14 +274,14 @@ const ExportEntity = () => {
   };
   
   const handleSaveTemplate = (name: string) => {
-    // For now, let's only save templates for the active entity
-    const columns = selectedFields
-      .filter(sf => sf.entityId === activeEntityId)
-      .map(sf => ({
-        id: sf.field.id,
-        label: sf.displayName || sf.field.label
-      }));
+    // For unified view, save all selected fields
+    const columns = selectedFields.map(sf => ({
+      id: sf.field.id,
+      label: sf.displayName || sf.field.label,
+      entityId: sf.entityId
+    }));
     
+    // Save the template to the active entity
     saveTemplate(name, activeEntityId, columns);
     
     toast({
@@ -322,10 +337,6 @@ const ExportEntity = () => {
     });
   };
   
-  // Get the current entity
-  const currentEntity = entities.find(e => e.id === activeEntityId);
-  if (!currentEntity) return null;
-
   // Use keyboard to toggle checkbox and navigate fields
   const handleKeyDown = (e: React.KeyboardEvent, entityId: string, fieldId: string) => {
     if (e.key === ' ' || e.key === 'Enter') {
@@ -341,6 +352,10 @@ const ExportEntity = () => {
   
   // Get active entity selected fields
   const activeSelectedFields = selectedFields.filter(field => field.entityId === activeEntityId);
+  
+  // Get the current entity
+  const currentEntity = entities.find(e => e.id === activeEntityId);
+  if (!currentEntity) return null;
   
   return (
     <div className="flex flex-col min-h-screen">
@@ -360,7 +375,7 @@ const ExportEntity = () => {
                   : currentEntity.description}
               </p>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex flex-col sm:flex-row items-center gap-4">
               <Button 
                 variant="outline" 
                 onClick={() => setIsTemplatesDialogOpen(true)}
@@ -371,7 +386,7 @@ const ExportEntity = () => {
               <Button
                 variant="outline"
                 onClick={() => setIsSaveDialogOpen(true)}
-                disabled={activeSelectedFields.length === 0}
+                disabled={selectedFields.length === 0}
                 className="hover:bg-accent hover:text-accent-foreground focus:ring-2 focus:ring-ring"
               >
                 Save as Template
@@ -379,17 +394,35 @@ const ExportEntity = () => {
             </div>
           </div>
           
-          {/* Entity selector tabs when multiple entities */}
+          {/* Entity selector tabs */}
           {selectedEntities.length > 1 && (
-            <Tabs value={activeEntityId} onValueChange={setActiveEntityId} className="mb-6">
-              <TabsList className="mb-2">
-                {selectedEntities.map(entity => (
-                  <TabsTrigger key={entity.id} value={entity.id}>
-                    {entity.name}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
+            <div className="mb-6">
+              <Tabs value={activeEntityId} onValueChange={setActiveEntityId} className="mb-2">
+                <TabsList className="mb-2">
+                  {selectedEntities.map(entity => (
+                    <TabsTrigger key={entity.id} value={entity.id}>
+                      {entity.name}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </Tabs>
+              <div className="flex items-center justify-end mb-4">
+                <Button 
+                  variant={unifiedView ? "default" : "outline"}
+                  onClick={() => setUnifiedView(true)}
+                  className="rounded-r-none"
+                >
+                  Combined Export
+                </Button>
+                <Button
+                  variant={!unifiedView ? "default" : "outline"} 
+                  onClick={() => setUnifiedView(false)}
+                  className="rounded-l-none"
+                >
+                  Entity-Specific Export
+                </Button>
+              </div>
+            </div>
           )}
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -409,18 +442,23 @@ const ExportEntity = () => {
               <div className="bg-card rounded-lg border shadow-sm p-6">
                 <h2 className="text-lg font-medium mb-4">Selected Fields</h2>
                 <div className="space-y-3">
-                  {activeSelectedFields.length === 0 ? (
+                  {selectedFields.length === 0 ? (
                     <p className="text-center py-8 text-muted-foreground">
                       No fields selected. Select fields from the left panel.
                     </p>
                   ) : (
-                    activeSelectedFields.map((sf, index) => (
+                    selectedFields.map((sf, index) => (
                       <div 
                         key={`${sf.entityId}-${sf.field.id}`}
-                        className="flex items-center justify-between p-3 bg-background border rounded-lg hover:bg-accent/10 transition-colors"
+                        className="flex items-center justify-between p-2 bg-background border rounded-lg hover:bg-accent/10 transition-colors"
                       >
                         <div>
-                          <div className="font-medium">{sf.displayName}</div>
+                          <div className="font-medium">
+                            {sf.displayName}
+                            <span className="ml-2 text-xs inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-primary text-primary-foreground hover:bg-primary/80">
+                              {selectedEntities.find(e => e.id === sf.entityId)?.name}
+                            </span>
+                          </div>
                           <div className="text-sm text-muted-foreground">{sf.field.id}</div>
                         </div>
                         <div className="flex items-center space-x-2">
@@ -439,7 +477,7 @@ const ExportEntity = () => {
                             variant="ghost" 
                             size="sm" 
                             onClick={() => handleMoveField(sf.entityId, sf.field.id, "down")}
-                            disabled={index === activeSelectedFields.length - 1}
+                            disabled={index === selectedFields.length - 1}
                             className="h-8 w-8 p-0 rounded-full"
                             tabIndex={0}
                           >
@@ -486,7 +524,7 @@ const ExportEntity = () => {
               </TabsList>
               <TabsContent value="preview" className="p-6 border rounded-lg bg-card">
                 <PreviewTable
-                  fields={activeSelectedFields}
+                  fields={selectedFields}
                   data={previewData}
                 />
               </TabsContent>

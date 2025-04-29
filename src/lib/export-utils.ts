@@ -1,3 +1,4 @@
+
 import { saveAs } from 'file-saver';
 import Papa from 'papaparse';
 import ExcelJS from 'exceljs';
@@ -6,58 +7,86 @@ import { XMLBuilder } from 'fast-xml-parser';
 export type ExportColumn = {
   id: string;
   label: string;
+  entityId?: string; // Added to support multi-entity exports
 };
 
 export type ExportFormat = 'csv' | 'xlsx' | 'xml' | 'pdf' | 'json';
 
 export async function exportData(
-  entityId: string,
+  primaryEntityId: string,
   columns: ExportColumn[],
-  format: ExportFormat
+  format: ExportFormat,
+  isMultiEntity: boolean = false
 ): Promise<void> {
   try {
-    // 1. Fetch data based on entity type
-    let data: any[] = [];
+    // Group columns by entity if this is a multi-entity export
+    const columnsByEntity: Record<string, ExportColumn[]> = {};
     
-    try {
-      // Try to fetch entity-specific data
-      const response = await fetch(`/src/data/${entityId}-data.json`);
-      if (response.ok) {
-        data = await response.json();
-      } else {
-        throw new Error(`Failed to fetch data for entity: ${entityId}`);
-      }
-    } catch (error) {
-      console.error(`Error fetching ${entityId} data:`, error);
-      // Fallback to generate sample data
-      data = generateSampleData(entityId, columns, 10);
+    if (isMultiEntity) {
+      // Group columns by their entity
+      columns.forEach(column => {
+        const entityId = column.entityId || primaryEntityId;
+        if (!columnsByEntity[entityId]) {
+          columnsByEntity[entityId] = [];
+        }
+        columnsByEntity[entityId].push(column);
+      });
+    } else {
+      // Single entity - all columns belong to primary entity
+      columnsByEntity[primaryEntityId] = columns;
     }
     
-    // 2. Limit to max 10,000 rows for demo purposes
-    data = data.slice(0, 10000);
+    // Fetch data for all required entities
+    let combinedData: Record<string, any>[] = [];
     
-    // 3. Format and prepare data for export
-    // Map data to only include selected columns with their custom labels
-    const formattedData = data.map((row: Record<string, any>) => {
+    if (isMultiEntity) {
+      // For a multi-entity export, we need to combine data from multiple entities
+      // For simplicity in this demo, we'll generate sample data that includes all fields
+      const allEntityIds = Object.keys(columnsByEntity);
+      combinedData = generateCombinedSampleData(columns, allEntityIds, 50);
+    } else {
+      // For a single entity export, fetch entity data as before
+      try {
+        const response = await fetch(`/src/data/${primaryEntityId}-data.json`);
+        if (response.ok) {
+          combinedData = await response.json();
+        } else {
+          throw new Error(`Failed to fetch data for entity: ${primaryEntityId}`);
+        }
+      } catch (error) {
+        console.error(`Error fetching ${primaryEntityId} data:`, error);
+        // Fallback to generate sample data
+        combinedData = generateSampleData(primaryEntityId, columns, 50);
+      }
+    }
+    
+    // Limit to max 10,000 rows for demo purposes
+    combinedData = combinedData.slice(0, 10000);
+    
+    // Format data for export - map data to include only selected columns with their labels
+    const formattedData = combinedData.map((row: Record<string, any>) => {
       const newRow: Record<string, any> = {};
       columns.forEach((column) => {
+        // Use the field ID as the key, regardless of entity
         newRow[column.label] = row[column.id] !== undefined ? row[column.id] : '';
       });
       return newRow;
     });
 
-    // 4. Generate file based on format and trigger download
+    // Generate export file based on format
+    const filename = isMultiEntity ? 'combined-export' : `${primaryEntityId}-export`;
+    
     switch (format) {
       case 'csv':
-        return exportCSV(formattedData, `${entityId}-export`);
+        return exportCSV(formattedData, filename);
       case 'xlsx':
-        return exportExcel(formattedData, `${entityId}-export`);
+        return exportExcel(formattedData, filename);
       case 'xml':
-        return exportXML(formattedData, `${entityId}-export`);
+        return exportXML(formattedData, filename);
       case 'pdf':
-        return exportPDF(formattedData, `${entityId}-export`);
+        return exportPDF(formattedData, filename);
       case 'json':
-        return exportJSON(formattedData, `${entityId}-export`);
+        return exportJSON(formattedData, filename);
       default:
         throw new Error(`Unsupported export format: ${format}`);
     }
@@ -65,6 +94,60 @@ export async function exportData(
     console.error('Export error:', error);
     throw error;
   }
+}
+
+// Generate combined sample data for multiple entities
+function generateCombinedSampleData(
+  columns: ExportColumn[],
+  entityIds: string[],
+  count: number
+): Record<string, any>[] {
+  const data: Record<string, any>[] = [];
+  
+  for (let i = 0; i < count; i++) {
+    const item: Record<string, any> = {};
+    
+    // Add data for each column, regardless of entity
+    columns.forEach(column => {
+      const columnId = column.id;
+      
+      if (columnId.includes('date') || columnId.includes('_date')) {
+        // Generate a random date in the past year
+        const date = new Date();
+        date.setDate(date.getDate() - Math.floor(Math.random() * 365));
+        item[columnId] = date.toISOString().split('T')[0];
+      }
+      else if (columnId.includes('time')) {
+        // Generate a random timestamp
+        const date = new Date();
+        date.setHours(date.getHours() - Math.floor(Math.random() * 48));
+        item[columnId] = date.toISOString();
+      }
+      else if (columnId.includes('id')) {
+        // Generate an ID with entity prefix
+        const entityPrefix = column.entityId?.charAt(0).toUpperCase() || 'X';
+        item[columnId] = `${entityPrefix}${i + 1000}`;
+      }
+      else if (columnId === 'score' || columnId.includes('duration') || columnId.includes('amount')) {
+        // Generate a number
+        item[columnId] = Math.floor(Math.random() * 100);
+      }
+      else if (columnId.includes('status')) {
+        // Generate a status
+        const statuses = ['Active', 'Inactive', 'Pending', 'Completed'];
+        item[columnId] = statuses[Math.floor(Math.random() * statuses.length)];
+      }
+      else {
+        // Generate a string that includes the entity ID for clarity
+        const entityPrefix = column.entityId || 'unknown';
+        item[columnId] = `${entityPrefix.charAt(0).toUpperCase()}${columnId} ${i + 1}`;
+      }
+    });
+    
+    data.push(item);
+  }
+  
+  return data;
 }
 
 // Helper function to generate sample data if no JSON file is found

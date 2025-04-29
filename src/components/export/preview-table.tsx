@@ -36,11 +36,15 @@ export const PreviewTable = ({ fields, data }: PreviewTableProps) => {
         <TableBody>
           {data.map((row, i) => (
             <TableRow key={i}>
-              {fields.map((field) => (
-                <TableCell key={`${field.entityId || ''}-${field.field.id}`}>
-                  {formatValue(row[field.field.id], field.field.type)}
-                </TableCell>
-              ))}
+              {fields.map((field) => {
+                // Check if the field has a fieldKey which contains the entity prefix
+                const valueKey = field.field.id;
+                return (
+                  <TableCell key={`${field.entityId || ''}-${field.field.id}`}>
+                    {formatValue(row[valueKey], field.field.type)}
+                  </TableCell>
+                );
+              })}
             </TableRow>
           ))}
         </TableBody>
