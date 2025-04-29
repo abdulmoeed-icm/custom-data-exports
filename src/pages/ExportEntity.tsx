@@ -27,6 +27,9 @@ const generateCombinedPreviewData = (
   selectedFields: SelectedField[], 
   count = 10
 ): Array<Record<string, any>> => {
+  // Create a seed date that will remain consistent
+  const seedDate = new Date('2024-04-15T12:00:00Z');
+  
   return Array.from({ length: count }, (_, i) => {
     const row: Record<string, any> = {};
     
@@ -38,20 +41,22 @@ const generateCombinedPreviewData = (
           row[field.id] = `Sample ${field.id} ${i + 1}`;
           break;
         case 'int':
-          row[field.id] = Math.floor(Math.random() * 1000);
+          row[field.id] = (i + 1) * 100 + Math.floor(i / 2) * 50;
           break;
         case 'date':
-          const date = new Date();
-          date.setDate(date.getDate() - Math.floor(Math.random() * 365));
+          // Generate consistent dates relative to seed date and row index
+          const date = new Date(seedDate);
+          date.setDate(date.getDate() - (i * 7)); // Each row is 7 days apart
           row[field.id] = date.toISOString().split('T')[0];
           break;
         case 'datetime':
-          const datetime = new Date();
-          datetime.setHours(datetime.getHours() - Math.floor(Math.random() * 168));
+          // Generate consistent datetimes relative to seed date and row index
+          const datetime = new Date(seedDate);
+          datetime.setHours(datetime.getHours() - (i * 24)); // Each row is 24 hours apart
           row[field.id] = datetime.toISOString();
           break;
         case 'boolean':
-          row[field.id] = Math.random() > 0.5;
+          row[field.id] = i % 2 === 0; // Alternating pattern
           break;
         default:
           row[field.id] = `${entityId} value ${i + 1}`;

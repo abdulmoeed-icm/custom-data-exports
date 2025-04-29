@@ -2,6 +2,7 @@
 import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { type Field } from '@/data/fields';
+import { format } from 'date-fns';
 
 interface PreviewTableProps {
   fields: Array<{
@@ -59,9 +60,19 @@ const formatValue = (value: any, type: string): string => {
   
   switch (type) {
     case 'datetime':
-      return new Date(value).toLocaleString();
+      try {
+        const date = new Date(value);
+        return format(date, 'MMM d, yyyy h:mm a');
+      } catch (e) {
+        return String(value);
+      }
     case 'date':
-      return new Date(value).toLocaleDateString();
+      try {
+        const date = new Date(value);
+        return format(date, 'MMM d, yyyy');
+      } catch (e) {
+        return String(value);
+      }
     case 'boolean':
       return value ? 'Yes' : 'No';
     default:
