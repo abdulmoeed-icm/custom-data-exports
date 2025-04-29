@@ -1,8 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Header } from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FieldList } from '@/components/export/field-list';
 import { PreviewTable } from '@/components/export/preview-table';
 import { ExportFormatSelect } from '@/components/export/export-format-select';
