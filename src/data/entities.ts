@@ -5,6 +5,7 @@ export interface Entity {
   description: string;
 }
 
+// Define the entities array with consistent structure
 export const entities: Entity[] = [
   {
     id: "time-entry",
@@ -33,4 +34,6 @@ export const entities: Entity[] = [
   }
 ];
 
+// Add additional entities from entities.json file if needed
+// This ensures backward compatibility
 export default entities;

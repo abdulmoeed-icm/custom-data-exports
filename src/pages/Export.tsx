@@ -16,20 +16,43 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { entities } from '@/data/entities';
+import { entities, Entity } from '@/data/entities';
+import { EntityCard } from '@/components/export/entity-card';
 
 const Export = () => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
-  const [entityList, setEntityList] = useState(entities || []);
+  // Initialize with empty array and then set with entities to avoid undefined errors
+  const [entityList, setEntityList] = useState<Entity[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Ensure entities are loaded to avoid "undefined is not iterable" error
+  // Load entities safely
   useEffect(() => {
-    if (entities) {
-      setEntityList(entities);
+    try {
+      if (entities && Array.isArray(entities)) {
+        setEntityList(entities);
+      } else {
+        console.error("Entities is not an array:", entities);
+        // Fallback to empty array if entities is undefined or not an array
+        setEntityList([]);
+      }
+    } catch (error) {
+      console.error("Error loading entities:", error);
+      setEntityList([]);
+    } finally {
+      setIsLoading(false);
     }
   }, []);
+
+  // Don't render the command component until entities are loaded
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center p-8">
+        <p>Loading entities...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col items-center p-8">
@@ -44,8 +67,8 @@ const Export = () => {
               aria-expanded={open}
               className="w-full justify-between"
             >
-              {value
-                ? entityList.find((entity) => entity.id === value)?.name
+              {value && entityList.length > 0
+                ? entityList.find((entity) => entity.id === value)?.name || "Select an entity..."
                 : "Select an entity..."}
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
@@ -55,25 +78,29 @@ const Export = () => {
               <CommandInput placeholder="Search entities..." />
               <CommandEmpty>No entity found.</CommandEmpty>
               <CommandGroup>
-                {entityList.map((entity) => (
-                  <CommandItem
-                    key={entity.id}
-                    value={entity.id}
-                    onSelect={(currentValue) => {
-                      setValue(currentValue);
-                      setOpen(false);
-                      navigate(`/export/${currentValue}`);
-                    }}
-                  >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        value === entity.id ? "opacity-100" : "opacity-0"
-                      )}
-                    />
-                    {entity.name}
-                  </CommandItem>
-                ))}
+                {entityList && entityList.length > 0 ? (
+                  entityList.map((entity) => (
+                    <CommandItem
+                      key={entity.id}
+                      value={entity.id}
+                      onSelect={(currentValue) => {
+                        setValue(currentValue);
+                        setOpen(false);
+                        navigate(`/export/${currentValue}`);
+                      }}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          value === entity.id ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      {entity.name}
+                    </CommandItem>
+                  ))
+                ) : (
+                  <CommandItem disabled>No entities available</CommandItem>
+                )}
               </CommandGroup>
             </Command>
           </PopoverContent>
