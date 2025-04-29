@@ -1,0 +1,43 @@
+
+[
+  {
+    "assessment_id": "ASM001",
+    "client_id": "CLT001",
+    "assessment_type": "Initial Evaluation",
+    "assessment_date": "2022-03-05",
+    "assessor_name": "Dr. Maria Rodriguez",
+    "score": 85
+  },
+  {
+    "assessment_id": "ASM002",
+    "client_id": "CLT001",
+    "assessment_type": "Quarterly Review",
+    "assessment_date": "2022-06-12",
+    "assessor_name": "Dr. Maria Rodriguez",
+    "score": 89
+  },
+  {
+    "assessment_id": "ASM003",
+    "client_id": "CLT002",
+    "assessment_type": "Initial Evaluation",
+    "assessment_date": "2022-06-20",
+    "assessor_name": "Dr. John Smith",
+    "score": 72
+  },
+  {
+    "assessment_id": "ASM004",
+    "client_id": "CLT003",
+    "assessment_type": "Annual Assessment",
+    "assessment_date": "2022-09-15",
+    "assessor_name": "Dr. David Johnson",
+    "score": 91
+  },
+  {
+    "assessment_id": "ASM005",
+    "client_id": "CLT002",
+    "assessment_type": "Quarterly Review",
+    "assessment_date": "2022-09-25",
+    "assessor_name": "Dr. Sarah Williams",
+    "score": 78
+  }
+]

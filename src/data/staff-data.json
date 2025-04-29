@@ -1,0 +1,43 @@
+
+[
+  {
+    "employee_id": "EMP001",
+    "first_name": "John",
+    "last_name": "Smith",
+    "position": "Program Director",
+    "hire_date": "2020-03-15",
+    "certification": "BCBA"
+  },
+  {
+    "employee_id": "EMP002",
+    "first_name": "Maria",
+    "last_name": "Rodriguez",
+    "position": "Clinical Supervisor",
+    "hire_date": "2021-05-22",
+    "certification": "RBT, BCBA"
+  },
+  {
+    "employee_id": "EMP003",
+    "first_name": "David",
+    "last_name": "Johnson",
+    "position": "Therapist",
+    "hire_date": "2022-01-10",
+    "certification": "RBT"
+  },
+  {
+    "employee_id": "EMP004",
+    "first_name": "Sarah",
+    "last_name": "Williams",
+    "position": "Administrative Assistant",
+    "hire_date": "2022-09-05",
+    "certification": "N/A"
+  },
+  {
+    "employee_id": "EMP005",
+    "first_name": "Michael",
+    "last_name": "Brown",
+    "position": "Behavior Technician",
+    "hire_date": "2023-02-15",
+    "certification": "RBT"
+  }
+]

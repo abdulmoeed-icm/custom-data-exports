@@ -1,0 +1,43 @@
+
+[
+  {
+    "training_id": "TRN001",
+    "employee_id": "EMP001",
+    "training_name": "Crisis Prevention",
+    "completion_date": "2023-02-15",
+    "expiry_date": "2024-02-15",
+    "status": "Completed"
+  },
+  {
+    "training_id": "TRN002",
+    "employee_id": "EMP002",
+    "training_name": "Ethics in Practice",
+    "completion_date": "2022-11-10",
+    "expiry_date": "2023-11-10",
+    "status": "Completed"
+  },
+  {
+    "training_id": "TRN003",
+    "employee_id": "EMP003",
+    "training_name": "Data Collection",
+    "completion_date": "2023-04-05",
+    "expiry_date": "2024-04-05",
+    "status": "Completed"
+  },
+  {
+    "training_id": "TRN004",
+    "employee_id": "EMP001",
+    "training_name": "Leadership Development",
+    "completion_date": "2022-09-20",
+    "expiry_date": "2023-09-20",
+    "status": "Expired"
+  },
+  {
+    "training_id": "TRN005",
+    "employee_id": "EMP005",
+    "training_name": "First Aid/CPR",
+    "completion_date": "2023-01-15",
+    "expiry_date": "2025-01-15",
+    "status": "Completed"
+  }
+]

@@ -28,9 +28,14 @@ export const entities: Entity[] = [
     description: "Service programs and initiatives"
   },
   {
-    id: "billing",
-    name: "Billing",
-    description: "Invoice and payment records"
+    id: "trainings",
+    name: "Staff Trainings",
+    description: "Employee training and certification records"
+  },
+  {
+    id: "assessments",
+    name: "Individual Assessments",
+    description: "Client assessment and evaluation records"
   }
 ];
 
