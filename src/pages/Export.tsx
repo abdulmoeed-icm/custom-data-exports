@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, ChevronsUpDown, AlertCircle } from "lucide-react";
+import { Check, ChevronsUpDown, AlertCircle, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,13 +18,14 @@ import {
 } from "@/components/ui/popover";
 import { entities as initialEntities, Entity } from '@/data/entities';
 import { EntityCard } from '@/components/export/entity-card';
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
 
 const Export = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
-  const [value, setValue] = useState("");
+  const [selectedEntities, setSelectedEntities] = useState<Entity[]>([]);
   const [entityList, setEntityList] = useState<Entity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -67,18 +68,55 @@ const Export = () => {
   }, []);
 
   const handleSelectEntity = (currentValue: string) => {
-    setValue(currentValue);
-    setOpen(false);
-    
-    // Navigate only if the selected entity exists
     const entity = entityList.find(e => e.id === currentValue);
-    if (entity) {
-      navigate(`/export/${currentValue}`);
-    } else {
+    if (!entity) {
       toast({
         variant: "destructive",
         title: "Error",
         description: "Selected entity not found",
+      });
+      return;
+    }
+
+    // Check if entity is already selected
+    if (selectedEntities.some(e => e.id === currentValue)) {
+      // Remove from selection if already selected
+      setSelectedEntities(prev => prev.filter(e => e.id !== currentValue));
+    } else {
+      // Add to selection if not already selected
+      setSelectedEntities(prev => [...prev, entity]);
+    }
+  };
+
+  const handleRemoveEntity = (entityId: string) => {
+    setSelectedEntities(prev => prev.filter(e => e.id !== entityId));
+  };
+
+  const handleExportSelected = () => {
+    if (selectedEntities.length === 0) {
+      toast({
+        variant: "destructive",
+        title: "No entities selected",
+        description: "Please select at least one entity to export",
+      });
+      return;
+    }
+    
+    if (selectedEntities.length === 1) {
+      // If only one entity is selected, navigate to the single entity export page
+      navigate(`/export/${selectedEntities[0].id}`);
+    } else {
+      // For multiple entities, we could navigate to a new page for batch export
+      // or implement multi-entity export directly here
+      toast({
+        title: "Multiple entities selected",
+        description: `You've selected ${selectedEntities.length} entities for export.`,
+      });
+      
+      // For demonstration, let's navigate to the first one
+      // In a real implementation, you might want to create a dedicated multi-entity export page
+      navigate(`/export/${selectedEntities[0].id}`, { 
+        state: { selectedEntities: selectedEntities } 
       });
     }
   };
@@ -113,48 +151,81 @@ const Export = () => {
         <h1 className="text-4xl font-bold text-center">Custom Data Export</h1>
         
         {entityList.length > 0 ? (
-          loaded && (
-            <Popover open={open} onOpenChange={setOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={open}
-                  className="w-full justify-between"
-                >
-                  {value
-                    ? entityList.find((entity) => entity.id === value)?.name || "Select an entity..."
-                    : "Select an entity..."}
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-full p-0">
-                {loaded && entityList.length > 0 && (
-                  <Command>
-                    <CommandInput placeholder="Search entities..." />
-                    <CommandEmpty>No entity found.</CommandEmpty>
-                    <CommandGroup>
-                      {entityList.map((entity) => (
-                        <CommandItem
-                          key={entity.id}
-                          value={entity.id}
-                          onSelect={handleSelectEntity}
-                        >
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              value === entity.id ? "opacity-100" : "opacity-0"
-                            )}
-                          />
-                          {entity.name}
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </Command>
-                )}
-              </PopoverContent>
-            </Popover>
-          )
+          <div className="space-y-4">
+            {loaded && (
+              <Popover open={open} onOpenChange={setOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={open}
+                    className="w-full justify-between"
+                  >
+                    {selectedEntities.length > 0 
+                      ? `${selectedEntities.length} entity/entities selected`
+                      : "Select entities..."}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0">
+                  {loaded && entityList.length > 0 && (
+                    <Command>
+                      <CommandInput placeholder="Search entities..." />
+                      <CommandEmpty>No entity found.</CommandEmpty>
+                      <CommandGroup>
+                        {entityList.map((entity) => (
+                          <CommandItem
+                            key={entity.id}
+                            value={entity.id}
+                            onSelect={handleSelectEntity}
+                          >
+                            <div className="flex items-center">
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  selectedEntities.some(e => e.id === entity.id) ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              {entity.name}
+                            </div>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </Command>
+                  )}
+                </PopoverContent>
+              </Popover>
+            )}
+
+            {/* Selected entities badges */}
+            {selectedEntities.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-4">
+                {selectedEntities.map(entity => (
+                  <Badge key={entity.id} variant="secondary" className="flex items-center gap-1">
+                    {entity.name}
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-4 w-4 p-0"
+                      onClick={() => handleRemoveEntity(entity.id)}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </Badge>
+                ))}
+              </div>
+            )}
+            
+            {/* Export button for selected entities */}
+            {selectedEntities.length > 0 && (
+              <Button 
+                className="w-full mt-4" 
+                onClick={handleExportSelected}
+              >
+                Export Selected Entities
+              </Button>
+            )}
+          </div>
         ) : (
           <div className="text-center p-4 border rounded-md">
             <p>No entities available for export.</p>
@@ -165,7 +236,12 @@ const Export = () => {
         {loaded && entityList.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
             {entityList.map(entity => (
-              <EntityCard key={entity.id} entity={entity} />
+              <EntityCard 
+                key={entity.id} 
+                entity={entity} 
+                isSelected={selectedEntities.some(e => e.id === entity.id)}
+                onToggleSelect={() => handleSelectEntity(entity.id)}
+              />
             ))}
           </div>
         )}
