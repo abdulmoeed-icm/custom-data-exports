@@ -1,6 +1,5 @@
 
 import { Routes, Route } from "react-router-dom";
-import { Toaster } from "@/components/ui/toaster";
 import Index from "@/pages/Index";
 import Export from "@/pages/Export";
 import ExportEntity from "@/pages/ExportEntity";
@@ -15,7 +14,6 @@ function App() {
         <Route path="/export/:entityId" element={<ExportEntity />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
-      <Toaster />
     </>
   );
 }
