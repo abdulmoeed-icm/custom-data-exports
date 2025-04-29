@@ -12,7 +12,7 @@ const Index = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="text-center">
             <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl sm:tracking-tight lg:text-6xl">
-              Data Forge Exports
+              Custom Data Exports
             </h1>
             <p className="max-w-xl mt-5 mx-auto text-xl text-gray-500">
               Export your data in any format. Customize fields, preview results, and save templates for future use.
@@ -57,7 +57,7 @@ const Index = () => {
       <footer className="bg-white">
         <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
           <p className="text-center text-gray-400 text-sm">
-            &copy; {new Date().getFullYear()} Data Forge Exports. All rights reserved.
+            &copy; {new Date().getFullYear()} Custom Data Exports. All rights reserved.
           </p>
         </div>
       </footer>
