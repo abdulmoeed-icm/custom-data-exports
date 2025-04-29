@@ -16,17 +16,21 @@ const STORAGE_KEY = 'export-templates';
 export function useTemplates() {
   const [templates, setTemplates] = useState<Template[]>([]);
 
+  // Load templates from localStorage on component mount
   useEffect(() => {
-    // Load templates from localStorage on component mount
     const loadTemplates = () => {
-      const savedTemplates = localStorage.getItem(STORAGE_KEY);
-      if (savedTemplates) {
-        try {
-          setTemplates(JSON.parse(savedTemplates));
-        } catch (e) {
-          console.error('Error parsing templates from localStorage', e);
-          setTemplates([]);
+      try {
+        const savedTemplates = localStorage.getItem(STORAGE_KEY);
+        if (savedTemplates) {
+          const parsed = JSON.parse(savedTemplates);
+          console.log('Loaded templates from storage:', parsed);
+          setTemplates(parsed);
+        } else {
+          console.log('No templates found in storage');
         }
+      } catch (e) {
+        console.error('Error parsing templates from localStorage', e);
+        setTemplates([]);
       }
     };
 
@@ -44,7 +48,15 @@ export function useTemplates() {
 
     const updatedTemplates = [newTemplate, ...templates];
     setTemplates(updatedTemplates);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedTemplates));
+    
+    // Save to localStorage
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedTemplates));
+      console.log('Saved template:', newTemplate);
+      console.log('Updated templates list:', updatedTemplates);
+    } catch (e) {
+      console.error('Error saving templates to localStorage', e);
+    }
     
     return newTemplate;
   };

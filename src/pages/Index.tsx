@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Header } from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
@@ -15,10 +15,15 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { FileText, ChevronRight } from 'lucide-react';
 import { useTemplates } from '@/hooks/useTemplates';
+import { toast } from '@/hooks/use-toast';
 
 const Index = () => {
-  // Use the templates hook instead of static data
+  // Use the templates hook and log templates for debugging
   const { templates } = useTemplates();
+  
+  useEffect(() => {
+    console.log("Current templates:", templates);
+  }, [templates]);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -70,16 +75,16 @@ const Index = () => {
             </div>
           </div>
           
-          {/* Templates Carousel - Updated to use templates from useTemplates hook */}
-          {templates.length > 0 && (
-            <div className="mt-28 mb-12">
-              <div className="text-center mb-10">
-                <h2 className="text-3xl font-bold text-gray-900">Saved Templates</h2>
-                <p className="mt-3 text-lg text-gray-500">
-                  Quick access to your recently saved export configurations
-                </p>
-              </div>
-              
+          {/* Templates Carousel - Will show if templates exist */}
+          <div className="mt-28 mb-12">
+            <div className="text-center mb-10">
+              <h2 className="text-3xl font-bold text-gray-900">Saved Templates</h2>
+              <p className="mt-3 text-lg text-gray-500">
+                Quick access to your recently saved export configurations
+              </p>
+            </div>
+            
+            {templates.length > 0 ? (
               <div className="relative px-12">
                 <Carousel className="w-full max-w-5xl mx-auto">
                   <CarouselContent>
@@ -141,8 +146,17 @@ const Index = () => {
                   )}
                 </Carousel>
               </div>
-            </div>
-          )}
+            ) : (
+              <div className="text-center py-12 border rounded-lg bg-gray-50">
+                <p className="text-gray-500">No templates saved yet</p>
+                <Link to="/export" className="mt-4 inline-block">
+                  <Button variant="outline" size="sm">
+                    Create Your First Template
+                  </Button>
+                </Link>
+              </div>
+            )}
+          </div>
         </div>
       </main>
       <footer className="bg-white">

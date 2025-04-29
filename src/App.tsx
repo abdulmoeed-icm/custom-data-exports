@@ -7,14 +7,12 @@ import NotFound from "@/pages/NotFound";
 
 function App() {
   return (
-    <>
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/export" element={<Export />} />
-        <Route path="/export/:entityId" element={<ExportEntity />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </>
+    <Routes>
+      <Route path="/" element={<Index />} />
+      <Route path="/export" element={<Export />} />
+      <Route path="/export/:entityId" element={<ExportEntity />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
   );
 }
 
