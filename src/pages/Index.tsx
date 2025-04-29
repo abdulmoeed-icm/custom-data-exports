@@ -10,13 +10,16 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { exportTemplates } from '@/data/export-templates';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { FileText, ChevronRight } from 'lucide-react';
+import { useTemplates } from '@/hooks/useTemplates';
 
 const Index = () => {
+  // Use the templates hook instead of static data
+  const { templates } = useTemplates();
+
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
@@ -67,73 +70,79 @@ const Index = () => {
             </div>
           </div>
           
-          {/* Templates Carousel */}
-          <div className="mt-28 mb-12">
-            <div className="text-center mb-10">
-              <h2 className="text-3xl font-bold text-gray-900">Saved Templates</h2>
-              <p className="mt-3 text-lg text-gray-500">
-                Quick access to your recently saved export configurations
-              </p>
-            </div>
-            
-            <div className="relative px-12">
-              <Carousel className="w-full max-w-5xl mx-auto">
-                <CarouselContent>
-                  {exportTemplates.map((template) => (
-                    <CarouselItem key={template.id} className="md:basis-1/2 lg:basis-1/3">
-                      <Card className="border border-border shadow-md hover:shadow-lg hover:border-primary/30 transition-all mx-2 h-full">
-                        <CardHeader className="pb-2">
-                          <div className="flex justify-between items-start">
-                            <CardTitle className="text-lg font-semibold">{template.name}</CardTitle>
-                            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-                              {template.entityId}
-                            </Badge>
-                          </div>
-                          <CardDescription className="text-muted-foreground">
-                            {format(template.createdAt, 'MMM d, yyyy')}
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                          <p className="text-sm text-gray-500">
-                            {template.fields.length} fields selected
-                          </p>
-                          <div className="mt-2 flex flex-wrap gap-1">
-                            {template.fields.slice(0, 3).map((field) => (
-                              <Badge key={field.id} variant="secondary" className="text-xs">
-                                {field.displayName}
+          {/* Templates Carousel - Updated to use templates from useTemplates hook */}
+          {templates.length > 0 && (
+            <div className="mt-28 mb-12">
+              <div className="text-center mb-10">
+                <h2 className="text-3xl font-bold text-gray-900">Saved Templates</h2>
+                <p className="mt-3 text-lg text-gray-500">
+                  Quick access to your recently saved export configurations
+                </p>
+              </div>
+              
+              <div className="relative px-12">
+                <Carousel className="w-full max-w-5xl mx-auto">
+                  <CarouselContent>
+                    {templates.map((template) => (
+                      <CarouselItem key={template.id} className="md:basis-1/2 lg:basis-1/3">
+                        <Card className="border border-border shadow-md hover:shadow-lg hover:border-primary/30 transition-all mx-2 h-full">
+                          <CardHeader className="pb-2">
+                            <div className="flex justify-between items-start">
+                              <CardTitle className="text-lg font-semibold">{template.name}</CardTitle>
+                              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+                                {template.entityId}
                               </Badge>
-                            ))}
-                            {template.fields.length > 3 && (
-                              <Badge variant="secondary" className="text-xs">
-                                +{template.fields.length - 3} more
-                              </Badge>
-                            )}
-                          </div>
-                        </CardContent>
-                        <CardFooter>
-                          <Link 
-                            to={`/export/${template.entityId}?template=${template.id}`} 
-                            className="w-full"
-                          >
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="w-full button-hover-effect justify-center"
+                            </div>
+                            <CardDescription className="text-muted-foreground">
+                              {template.createdAt ? format(new Date(template.createdAt), 'MMM d, yyyy') : 'Recently created'}
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent>
+                            <p className="text-sm text-gray-500">
+                              {template.columns.length} fields selected
+                            </p>
+                            <div className="mt-2 flex flex-wrap gap-1">
+                              {template.columns.slice(0, 3).map((column) => (
+                                <Badge key={column.id} variant="secondary" className="text-xs">
+                                  {column.label}
+                                </Badge>
+                              ))}
+                              {template.columns.length > 3 && (
+                                <Badge variant="secondary" className="text-xs">
+                                  +{template.columns.length - 3} more
+                                </Badge>
+                              )}
+                            </div>
+                          </CardContent>
+                          <CardFooter>
+                            <Link 
+                              to={`/export/${template.entityId}?template=${template.id}`} 
+                              className="w-full"
                             >
-                              <FileText className="mr-1 h-4 w-4" />
-                              Use Template
-                            </Button>
-                          </Link>
-                        </CardFooter>
-                      </Card>
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-                <CarouselPrevious className="left-0" />
-                <CarouselNext className="right-0" />
-              </Carousel>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="w-full button-hover-effect justify-center"
+                              >
+                                <FileText className="mr-1 h-4 w-4" />
+                                Use Template
+                              </Button>
+                            </Link>
+                          </CardFooter>
+                        </Card>
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  {templates.length > 3 && (
+                    <>
+                      <CarouselPrevious className="left-0" />
+                      <CarouselNext className="right-0" />
+                    </>
+                  )}
+                </Carousel>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </main>
       <footer className="bg-white">
