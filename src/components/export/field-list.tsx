@@ -1,15 +1,10 @@
 
 import React, { useState } from 'react';
-import { 
-  Card, 
-  CardContent, 
-  CardHeader,
-  CardTitle
-} from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { type Field } from '@/data/fields';
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { Search } from 'lucide-react';
+import { type Field } from '@/data/fields';
 
 interface FieldListProps {
   fields: Field[];
@@ -28,6 +23,7 @@ export const FieldList = ({
   
   const filteredFields = fields.filter(field => 
     field.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    field.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
     field.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -64,7 +60,9 @@ export const FieldList = ({
                   className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex-1 cursor-pointer"
                 >
                   <div>{field.label}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">{field.description}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                    {field.description || field.id}
+                  </div>
                 </label>
               </div>
             ))

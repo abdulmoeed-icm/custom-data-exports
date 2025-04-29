@@ -102,23 +102,10 @@ const Export = () => {
       return;
     }
     
-    if (selectedEntities.length === 1) {
-      // If only one entity is selected, navigate to the single entity export page
-      navigate(`/export/${selectedEntities[0].id}`);
-    } else {
-      // For multiple entities, we could navigate to a new page for batch export
-      // or implement multi-entity export directly here
-      toast({
-        title: "Multiple entities selected",
-        description: `You've selected ${selectedEntities.length} entities for export.`,
-      });
-      
-      // For demonstration, let's navigate to the first one
-      // In a real implementation, you might want to create a dedicated multi-entity export page
-      navigate(`/export/${selectedEntities[0].id}`, { 
-        state: { selectedEntities: selectedEntities } 
-      });
-    }
+    // Always navigate to the export entity page with the selected entities
+    navigate(`/export/${selectedEntities[0].id}`, { 
+      state: { selectedEntities: selectedEntities } 
+    });
   };
 
   // Show loading state
@@ -222,7 +209,10 @@ const Export = () => {
                 className="w-full mt-4" 
                 onClick={handleExportSelected}
               >
-                Export Selected Entities
+                {selectedEntities.length === 1 
+                  ? `Export ${selectedEntities[0].name}`
+                  : `Export ${selectedEntities.length} Selected Entities`
+                }
               </Button>
             )}
           </div>

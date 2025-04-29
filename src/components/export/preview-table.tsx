@@ -7,6 +7,7 @@ interface PreviewTableProps {
   fields: Array<{
     field: Field;
     displayName: string;
+    entityId?: string; // Added entityId for multi-entity support
   }>;
   data: Array<Record<string, any>>;
 }
@@ -26,7 +27,7 @@ export const PreviewTable = ({ fields, data }: PreviewTableProps) => {
         <TableHeader>
           <TableRow>
             {fields.map((field) => (
-              <TableHead key={field.field.id}>
+              <TableHead key={`${field.entityId || ''}-${field.field.id}`}>
                 {field.displayName || field.field.label}
               </TableHead>
             ))}
@@ -36,7 +37,7 @@ export const PreviewTable = ({ fields, data }: PreviewTableProps) => {
           {data.map((row, i) => (
             <TableRow key={i}>
               {fields.map((field) => (
-                <TableCell key={field.field.id}>
+                <TableCell key={`${field.entityId || ''}-${field.field.id}`}>
                   {formatValue(row[field.field.id], field.field.type)}
                 </TableCell>
               ))}
