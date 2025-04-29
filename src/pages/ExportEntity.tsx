@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Header } from '@/components/layout/header';
@@ -165,6 +164,27 @@ const ExportEntity = () => {
         updatedFieldIds[entityId] = [...updatedFieldIds[entityId], fieldId];
       } else {
         updatedFieldIds[entityId] = updatedFieldIds[entityId].filter(id => id !== fieldId);
+      }
+      
+      return updatedFieldIds;
+    });
+  };
+  
+  const handleSelectAllFields = (entityId: string, isChecked: boolean) => {
+    const entityFields = allEntityFields[entityId] || [];
+    
+    setSelectedFieldIds(prev => {
+      const updatedFieldIds = { ...prev };
+      if (!updatedFieldIds[entityId]) {
+        updatedFieldIds[entityId] = [];
+      }
+      
+      if (isChecked) {
+        // Select all fields for this entity
+        updatedFieldIds[entityId] = entityFields.map(field => field.id);
+      } else {
+        // Deselect all fields for this entity
+        updatedFieldIds[entityId] = [];
       }
       
       return updatedFieldIds;
@@ -338,11 +358,11 @@ const ExportEntity = () => {
   };
   
   // Use keyboard to toggle checkbox and navigate fields
-  const handleKeyDown = (e: React.KeyboardEvent, entityId: string, fieldId: string) => {
+  const handleKeyDown = (e: React.KeyboardEvent, fieldId: string) => {
     if (e.key === ' ' || e.key === 'Enter') {
       e.preventDefault();
-      const isSelected = selectedFieldIds[entityId]?.includes(fieldId) || false;
-      handleSelectField(entityId, fieldId, !isSelected);
+      const isSelected = selectedFieldIds[activeEntityId]?.includes(fieldId) || false;
+      handleSelectField(activeEntityId, fieldId, !isSelected);
     }
   };
   
@@ -433,7 +453,8 @@ const ExportEntity = () => {
                   fields={activeEntityFields}
                   selectedFields={activeSelectedFieldIds}
                   onSelectField={(fieldId, isChecked) => handleSelectField(activeEntityId, fieldId, isChecked)}
-                  onKeyDown={(event, fieldId) => handleKeyDown(event, activeEntityId, fieldId)}
+                  onSelectAll={(isChecked) => handleSelectAllFields(activeEntityId, isChecked)}
+                  onKeyDown={(event, fieldId) => handleKeyDown(event, fieldId)}
                 />
               </div>
             </div>

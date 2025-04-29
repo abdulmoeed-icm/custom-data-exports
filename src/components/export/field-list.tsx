@@ -5,11 +5,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Search } from 'lucide-react';
 import { type Field } from '@/data/fields';
+import { Button } from "@/components/ui/button";
 
 interface FieldListProps {
   fields: Field[];
   selectedFields: string[];
   onSelectField: (fieldId: string, isChecked: boolean) => void;
+  onSelectAll?: (isChecked: boolean) => void;
   onKeyDown?: (event: React.KeyboardEvent, fieldId: string) => void;
 }
 
@@ -17,6 +19,7 @@ export const FieldList = ({
   fields, 
   selectedFields, 
   onSelectField,
+  onSelectAll,
   onKeyDown
 }: FieldListProps) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -26,6 +29,22 @@ export const FieldList = ({
     field.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
     field.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Check if all filtered fields are selected
+  const allSelected = filteredFields.length > 0 && 
+    filteredFields.every(field => selectedFields.includes(field.id));
+
+  // Handle select all toggle
+  const handleSelectAll = () => {
+    if (onSelectAll) {
+      onSelectAll(!allSelected);
+    } else {
+      // Fallback implementation if onSelectAll is not provided
+      filteredFields.forEach(field => {
+        onSelectField(field.id, !allSelected);
+      });
+    }
+  };
 
   return (
     <div>
@@ -38,6 +57,23 @@ export const FieldList = ({
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
+      
+      {filteredFields.length > 0 && (
+        <div className="mb-4 flex items-center">
+          <Checkbox 
+            id="select-all"
+            checked={allSelected}
+            onCheckedChange={handleSelectAll}
+          />
+          <label
+            htmlFor="select-all"
+            className="ml-2 text-sm font-medium cursor-pointer"
+          >
+            Select All
+          </label>
+        </div>
+      )}
+      
       <div className="max-h-[500px] overflow-y-auto pr-2">
         <div className="space-y-3">
           {filteredFields.length > 0 ? (
