@@ -425,7 +425,7 @@ const ExportEntity = () => {
                       {entity.name}
                       {selectedFieldIds[entity.id]?.length > 0 && (
                         <Badge 
-                          variant="primary" 
+                          variant="default" 
                           className="text-xs py-0 px-2 h-5 min-w-5 flex items-center justify-center rounded-full bg-primary text-primary-foreground"
                         >
                           {selectedFieldIds[entity.id]?.length}
