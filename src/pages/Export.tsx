@@ -1,12 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertCircle, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { entities as initialEntities, Entity } from '@/data/entities';
-import { EntityCard } from '@/components/export/entity-card';
 import { useToast } from "@/hooks/use-toast";
-import { Badge } from "@/components/ui/badge";
+import { LoadingState } from '@/components/export/loading-state';
+import { ErrorState } from '@/components/export/error-state';
+import { SelectedEntityBadges } from '@/components/export/selected-entity-badges';
+import { ExportButton } from '@/components/export/export-button';
+import { EntityGrid } from '@/components/export/entity-grid';
 
 const Export = () => {
   const navigate = useNavigate();
@@ -96,26 +97,12 @@ const Export = () => {
 
   // Show loading state
   if (isLoading) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center p-8">
-        <p>Loading entities...</p>
-      </div>
-    );
+    return <LoadingState />;
   }
 
   // Show error state
   if (error) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center p-8">
-        <AlertCircle className="h-8 w-8 text-red-500 mb-2" />
-        <p className="text-red-500 mb-4">{error}</p>
-        <Button 
-          onClick={() => window.location.reload()}
-        >
-          Retry
-        </Button>
-      </div>
-    );
+    return <ErrorState error={error} onRetry={() => window.location.reload()} />;
   }
 
   return (
@@ -132,36 +119,16 @@ const Export = () => {
             )}
 
             {/* Selected entities badges */}
-            {selectedEntities.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-4">
-                {selectedEntities.map(entity => (
-                  <Badge key={entity.id} variant="secondary" className="flex items-center gap-1">
-                    {entity.name}
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="h-4 w-4 p-0"
-                      onClick={() => handleRemoveEntity(entity.id)}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </Badge>
-                ))}
-              </div>
-            )}
+            <SelectedEntityBadges 
+              selectedEntities={selectedEntities} 
+              onRemoveEntity={handleRemoveEntity} 
+            />
             
             {/* Export button for selected entities */}
-            {selectedEntities.length > 0 && (
-              <Button 
-                className="w-full mt-4" 
-                onClick={handleExportSelected}
-              >
-                {selectedEntities.length === 1 
-                  ? `Export ${selectedEntities[0].name}`
-                  : `Export ${selectedEntities.length} Selected Entities`
-                }
-              </Button>
-            )}
+            <ExportButton 
+              selectedEntities={selectedEntities}
+              onExport={handleExportSelected}
+            />
           </div>
         ) : (
           <div className="text-center p-4 border rounded-md">
@@ -171,16 +138,11 @@ const Export = () => {
         
         {/* Display entity cards only when loaded */}
         {loaded && entityList.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
-            {entityList.map(entity => (
-              <EntityCard 
-                key={entity.id} 
-                entity={entity} 
-                isSelected={selectedEntities.some(e => e.id === entity.id)}
-                onToggleSelect={() => handleSelectEntity(entity.id)}
-              />
-            ))}
-          </div>
+          <EntityGrid 
+            entities={entityList}
+            selectedEntities={selectedEntities}
+            onToggleSelect={handleSelectEntity}
+          />
         )}
       </div>
     </div>
