@@ -1,8 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Header } from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FieldList } from '@/components/export/field-list';
 import { PreviewTable } from '@/components/export/preview-table';
 import { ExportFormatSelect } from '@/components/export/export-format-select';
@@ -551,37 +551,38 @@ const ExportEntity = () => {
             </div>
           </div>
           
+          {/* Preview Section */}
           <div className="mt-8">
-            <Tabs defaultValue="preview">
-              <TabsList className="mb-4">
-                <TabsTrigger value="preview">Preview</TabsTrigger>
-                <TabsTrigger value="export">Export Options</TabsTrigger>
-              </TabsList>
-              <TabsContent value="preview" className="p-6 border rounded-lg bg-card">
-                <PreviewTable
-                  fields={selectedFields}
-                  data={previewData}
+            <div className="p-6 border rounded-lg bg-card">
+              <h2 className="text-lg font-medium mb-4">Preview</h2>
+              <PreviewTable
+                fields={selectedFields}
+                data={previewData}
+              />
+            </div>
+          </div>
+          
+          {/* Export Options Section */}
+          <div className="mt-8">
+            <div className="p-6 border rounded-lg bg-card">
+              <h2 className="text-lg font-medium mb-4">Choose File Type to Export</h2>
+              <div className="flex flex-col gap-4 prose dark:prose-invert">
+                <ExportFormatSelect
+                  value={exportFormat}
+                  onValueChange={setExportFormat}
                 />
-              </TabsContent>
-              <TabsContent value="export" className="p-6 border rounded-lg bg-card">
-                <div className="flex flex-col gap-4 prose dark:prose-invert">
-                  <ExportFormatSelect
-                    value={exportFormat}
-                    onValueChange={setExportFormat}
-                  />
-                  
-                  <div className="flex justify-end mt-4">
-                    <Button 
-                      onClick={handleExport}
-                      disabled={selectedFields.length === 0 || isExporting}
-                      className="focus:ring-2 focus:ring-ring"
-                    >
-                      {isExporting ? "Exporting..." : "Export Data"}
-                    </Button>
-                  </div>
+                
+                <div className="flex justify-end mt-4">
+                  <Button 
+                    onClick={handleExport}
+                    disabled={selectedFields.length === 0 || isExporting}
+                    className="focus:ring-2 focus:ring-ring"
+                  >
+                    {isExporting ? "Exporting..." : "Export Data"}
+                  </Button>
                 </div>
-              </TabsContent>
-            </Tabs>
+              </div>
+            </div>
           </div>
         </div>
       </main>
