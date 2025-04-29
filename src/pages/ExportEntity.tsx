@@ -560,13 +560,10 @@ const ExportEntity = () => {
               </TabsContent>
               <TabsContent value="export" className="p-6 border rounded-lg bg-card">
                 <div className="flex flex-col gap-4 prose dark:prose-invert">
-                  <div>
-                    <h3 className="text-lg font-medium mb-2">Export Format</h3>
-                    <ExportFormatSelect
-                      value={exportFormat}
-                      onValueChange={setExportFormat}
-                    />
-                  </div>
+                  <ExportFormatSelect
+                    value={exportFormat}
+                    onValueChange={setExportFormat}
+                  />
                   
                   <div className="flex justify-end mt-4">
                     <Button 
