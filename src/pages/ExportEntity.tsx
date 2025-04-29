@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Header } from '@/components/layout/header';
@@ -562,10 +563,9 @@ const ExportEntity = () => {
             </div>
           </div>
           
-          {/* Export Options Section */}
+          {/* Export Options Section - Removed the heading as requested */}
           <div className="mt-8">
             <div className="p-6 border rounded-lg bg-card">
-              <h2 className="text-lg font-medium mb-4">Choose File Type to Export</h2>
               <div className="flex flex-col gap-4 prose dark:prose-invert">
                 <ExportFormatSelect
                   value={exportFormat}
