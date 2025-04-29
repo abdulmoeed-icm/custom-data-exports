@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useTemplates } from '@/hooks/useTemplates';
 import { TemplatesDialog } from '@/components/export/templates-dialog';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Badge } from '@/components/ui/badge';
 
 type SelectedField = {
   field: Field;
@@ -414,14 +415,22 @@ const ExportEntity = () => {
             </div>
           </div>
           
-          {/* Entity selector tabs */}
+          {/* Entity selector tabs with field count badges */}
           {selectedEntities.length > 1 && (
             <div className="mb-6">
               <Tabs value={activeEntityId} onValueChange={setActiveEntityId} className="mb-2">
                 <TabsList className="mb-2">
                   {selectedEntities.map(entity => (
-                    <TabsTrigger key={entity.id} value={entity.id}>
+                    <TabsTrigger key={entity.id} value={entity.id} className="flex items-center gap-2">
                       {entity.name}
+                      {selectedFieldIds[entity.id]?.length > 0 && (
+                        <Badge 
+                          variant="primary" 
+                          className="text-xs py-0 px-2 h-5 min-w-5 flex items-center justify-center rounded-full bg-primary text-primary-foreground"
+                        >
+                          {selectedFieldIds[entity.id]?.length}
+                        </Badge>
+                      )}
                     </TabsTrigger>
                   ))}
                 </TabsList>
