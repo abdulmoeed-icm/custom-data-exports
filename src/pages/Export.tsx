@@ -1,21 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, ChevronsUpDown, AlertCircle, X } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { AlertCircle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { entities as initialEntities, Entity } from '@/data/entities';
 import { EntityCard } from '@/components/export/entity-card';
 import { useToast } from "@/hooks/use-toast";
@@ -24,7 +11,6 @@ import { Badge } from "@/components/ui/badge";
 const Export = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [open, setOpen] = useState(false);
   const [selectedEntities, setSelectedEntities] = useState<Entity[]>([]);
   const [entityList, setEntityList] = useState<Entity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -67,8 +53,8 @@ const Export = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleSelectEntity = (currentValue: string) => {
-    const entity = entityList.find(e => e.id === currentValue);
+  const handleSelectEntity = (entityId: string) => {
+    const entity = entityList.find(e => e.id === entityId);
     if (!entity) {
       toast({
         variant: "destructive",
@@ -79,9 +65,9 @@ const Export = () => {
     }
 
     // Check if entity is already selected
-    if (selectedEntities.some(e => e.id === currentValue)) {
+    if (selectedEntities.some(e => e.id === entityId)) {
       // Remove from selection if already selected
-      setSelectedEntities(prev => prev.filter(e => e.id !== currentValue));
+      setSelectedEntities(prev => prev.filter(e => e.id !== entityId));
     } else {
       // Add to selection if not already selected
       setSelectedEntities(prev => [...prev, entity]);
@@ -140,48 +126,9 @@ const Export = () => {
         {entityList.length > 0 ? (
           <div className="space-y-4">
             {loaded && (
-              <Popover open={open} onOpenChange={setOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={open}
-                    className="w-full justify-between"
-                  >
-                    {selectedEntities.length > 0 
-                      ? `${selectedEntities.length} entity/entities selected`
-                      : "Select entities..."}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-full p-0">
-                  {loaded && entityList.length > 0 && (
-                    <Command>
-                      <CommandInput placeholder="Search entities..." />
-                      <CommandEmpty>No entity found.</CommandEmpty>
-                      <CommandGroup>
-                        {entityList.map((entity) => (
-                          <CommandItem
-                            key={entity.id}
-                            value={entity.id}
-                            onSelect={handleSelectEntity}
-                          >
-                            <div className="flex items-center">
-                              <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4",
-                                  selectedEntities.some(e => e.id === entity.id) ? "opacity-100" : "opacity-0"
-                                )}
-                              />
-                              {entity.name}
-                            </div>
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </Command>
-                  )}
-                </PopoverContent>
-              </Popover>
+              <h2 className="text-2xl font-semibold text-center mb-4 text-primary">
+                Select Modules below
+              </h2>
             )}
 
             {/* Selected entities badges */}
