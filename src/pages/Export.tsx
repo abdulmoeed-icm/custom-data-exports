@@ -23,33 +23,59 @@ const Export = () => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
-  // Initialize with empty array and then set with entities to avoid undefined errors
   const [entityList, setEntityList] = useState<Entity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Load entities safely
   useEffect(() => {
     try {
-      if (entities && Array.isArray(entities)) {
-        setEntityList(entities);
-      } else {
-        console.error("Entities is not an array:", entities);
-        // Fallback to empty array if entities is undefined or not an array
-        setEntityList([]);
-      }
+      // Use setTimeout to ensure this runs after component mounting
+      setTimeout(() => {
+        if (entities && Array.isArray(entities)) {
+          setEntityList([...entities]);
+          setIsLoading(false);
+        } else {
+          console.error("Entities is not an array:", entities);
+          setEntityList([]);
+          setError("Failed to load entities data");
+          setIsLoading(false);
+        }
+      }, 0);
     } catch (error) {
       console.error("Error loading entities:", error);
       setEntityList([]);
-    } finally {
+      setError("An error occurred while loading entities");
       setIsLoading(false);
     }
   }, []);
 
-  // Don't render the command component until entities are loaded
+  const handleSelectEntity = (currentValue: string) => {
+    setValue(currentValue);
+    setOpen(false);
+    navigate(`/export/${currentValue}`);
+  };
+
+  // Show loading state
   if (isLoading) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center p-8">
         <p>Loading entities...</p>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center p-8">
+        <p className="text-red-500">{error}</p>
+        <Button 
+          className="mt-4" 
+          onClick={() => window.location.reload()}
+        >
+          Retry
+        </Button>
       </div>
     );
   }
@@ -59,35 +85,31 @@ const Export = () => {
       <div className="w-full max-w-2xl space-y-8 animate-fade-in">
         <h1 className="text-4xl font-bold text-center">Custom Data Export</h1>
         
-        <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              role="combobox"
-              aria-expanded={open}
-              className="w-full justify-between"
-            >
-              {value && entityList.length > 0
-                ? entityList.find((entity) => entity.id === value)?.name || "Select an entity..."
-                : "Select an entity..."}
-              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-full p-0">
-            <Command>
-              <CommandInput placeholder="Search entities..." />
-              <CommandEmpty>No entity found.</CommandEmpty>
-              <CommandGroup>
-                {entityList && entityList.length > 0 ? (
-                  entityList.map((entity) => (
+        {entityList.length > 0 ? (
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={open}
+                className="w-full justify-between"
+              >
+                {value
+                  ? entityList.find((entity) => entity.id === value)?.name || "Select an entity..."
+                  : "Select an entity..."}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-full p-0">
+              <Command>
+                <CommandInput placeholder="Search entities..." />
+                <CommandEmpty>No entity found.</CommandEmpty>
+                <CommandGroup>
+                  {entityList.map((entity) => (
                     <CommandItem
                       key={entity.id}
                       value={entity.id}
-                      onSelect={(currentValue) => {
-                        setValue(currentValue);
-                        setOpen(false);
-                        navigate(`/export/${currentValue}`);
-                      }}
+                      onSelect={handleSelectEntity}
                     >
                       <Check
                         className={cn(
@@ -97,14 +119,23 @@ const Export = () => {
                       />
                       {entity.name}
                     </CommandItem>
-                  ))
-                ) : (
-                  <CommandItem disabled>No entities available</CommandItem>
-                )}
-              </CommandGroup>
-            </Command>
-          </PopoverContent>
-        </Popover>
+                  ))}
+                </CommandGroup>
+              </Command>
+            </PopoverContent>
+          </Popover>
+        ) : (
+          <div className="text-center p-4 border rounded-md">
+            <p>No entities available for export.</p>
+          </div>
+        )}
+        
+        {/* Display entity cards after loading */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
+          {entityList.map(entity => (
+            <EntityCard key={entity.id} entity={entity} />
+          ))}
+        </div>
       </div>
     </div>
   );

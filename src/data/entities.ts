@@ -34,6 +34,4 @@ export const entities: Entity[] = [
   }
 ];
 
-// Add additional entities from entities.json file if needed
-// This ensures backward compatibility
 export default entities;
